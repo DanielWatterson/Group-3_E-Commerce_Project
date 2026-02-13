@@ -1,5 +1,4 @@
 import express from "express";
-import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 import cors from "cors";
 
@@ -9,24 +8,31 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-});
-
+import { getAllCustomers, getCustomerById, postCustomer, patchCustomer, deleteCustomer} from "./controllers/customerController.js";
+import { getAllProducts, getProductById, createProduct, updateProduct,deleteProduct} from "./controllers/productController.js";
+import { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder } from "./controllers/orderController.js";
 
 app.listen(5050, () => {
   console.log("✅ API running on http://localhost:5050");
 });
 
-const getAllProducts = async () => {
-  const [rows] = await pool.query("SELECT * FROM products;");
-  return rows;
-};
+// routes folder will be functional by Monday 
 
-app.get("/products", async (req, res) => {
-  const products = await getAllProducts();
-  res.json(products);
-});
+// customer api routes
+app.get("/customer", getAllCustomers);
+app.get("/customer/:id", getCustomerById);
+app.post("/customer", postCustomer);
+app.patch("/customer/:id", patchCustomer); 
+app.delete("/customer/:id",deleteCustomer);
+// product api routes
+app.get("/products",getAllProducts);
+app.get("/products/:id",getProductById);
+app.post("/products",createProduct);
+app.patch ("/products/:id",updateProduct);
+app.delete("/products/:id", deleteProduct);
+// order api routes
+app.get("/orders", getAllOrders);
+app.get("/orders/:id", getOrderById);
+app.post("/orders", createOrder);
+app.patch("/orders/:id", updateOrder);
+app.delete("/orders/:id", deleteOrder);
