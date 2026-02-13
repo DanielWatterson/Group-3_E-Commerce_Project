@@ -1,10 +1,6 @@
 <script>
-
 </script>
 
 <template>
-    <template #icon>
-      <EcosystemIcon />
-    </template>
- 
+  <h1>Home</h1>
 </template>
