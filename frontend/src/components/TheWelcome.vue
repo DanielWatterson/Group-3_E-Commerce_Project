@@ -2,11 +2,11 @@
 export default {
   name: "TheWelcome",
   props: {
-    productsData: Array,
+    customerData: Array,
   }
 }
 </script>
 
 <template>
-<p>{{ productsData }}</p>
+<p>{{ customerData }}</p>
 </template>

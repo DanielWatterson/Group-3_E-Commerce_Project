@@ -9,19 +9,19 @@ export default {
   },
 
   computed: {
-    productsData() {
-      return this.$store.state.products;
+    customerData() {
+      return this.$store.state.customer;
     },
   },
 
   mounted() {
-    this.$store.dispatch("getProducts");
+    this.$store.dispatch("getCustomer");
   },
 };
 </script>
 
 <template>
   <main>
-    <TheWelcome :products-data="productsData" />
+    <TheWelcome :customer-data="customerData" />
   </main>
 </template>

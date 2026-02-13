@@ -21,12 +21,12 @@ app.listen(5050, () => {
   console.log("✅ API running on http://localhost:5050");
 });
 
-const getAllProducts = async () => {
-  const [rows] = await pool.query("SELECT * FROM products;");
+const getAllCustomer = async () => {
+  const [rows] = await pool.query("SELECT * FROM customer;");
   return rows;
 };
 
-app.get("/products", async (req, res) => {
-  const products = await getAllProducts();
-  res.json(products);
+app.get("/customer", async (req, res) => {
+  const customer = await getAllCustomer();
+  res.json(customer);
 });

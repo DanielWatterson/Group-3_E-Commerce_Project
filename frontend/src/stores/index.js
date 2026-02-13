@@ -3,20 +3,20 @@ import axios from "axios";
 
 const store = createStore({
     state: {
-        products: [],
+        customer: [],
     },
     mutations: {
-        getProducts(state, payload) {
-            state.products = payload;
+        getCustomer(state, payload) {
+            state.customer = payload;
         },
     },
     actions: {
-        async getProducts({ commit }) {
+        async getCustomer({ commit }) {
             try {
-                const res = await axios.get(`http://localhost:5050/products`);
-                commit("getProducts", res.data);
+                const res = await axios.get(`http://localhost:5050/customer`);
+                commit("getCustomer", res.data);
             } catch (error) {
-                console.error("Failed to fetch getProducts:", error);
+                console.error("Failed to fetch getCustomer:", error);
                 throw error;
             }
         },
