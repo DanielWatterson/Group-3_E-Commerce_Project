@@ -20,6 +20,16 @@ const store = createStore({
                 throw error;
             }
         },
+        async postCustomer({ commit }, payload) {
+            try {
+                const res = await axios.post(`http://localhost:5050/customer`, payload);
+                commit("postCustomer", res.data);
+            } catch (error) {
+                console.error("Failed to fetch postCustomer:", error);
+                throw error;
+            }
+        },
+
     },
 });
 

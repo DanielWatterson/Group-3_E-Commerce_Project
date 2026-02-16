@@ -1,27 +1,13 @@
 <script>
-import TheWelcome from "@/components/TheWelcome.vue";
 
 export default {
-  name: "AttendanceView",
-
-  components: {
-    TheWelcome,
-  },
-
-  computed: {
-    customerData() {
-      return this.$store.state.customer;
-    },
-  },
-
-  mounted() {
-    this.$store.dispatch("getCustomer");
-  },
+  name: "HomeView",
+  
 };
 </script>
 
 <template>
   <main>
-    <TheWelcome :customer-data="customerData" />
+    <h1>Home</h1>
   </main>
 </template>

@@ -1,6 +1,6 @@
 <script>
 export default {
-  name: "TheWelcome",
+  name: "CustomersList",
   props: {
     customerData: Array,
   }
