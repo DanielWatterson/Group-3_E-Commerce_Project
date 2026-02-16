@@ -1,23 +1,27 @@
 import {
-    getAllOrders as getAllOrdersModel,
-    getOrderById as getOrderByIdModel,
-    createOrder as createOrderModel,
-    updateOrder as updateOrderModel,
-    deleteOrder as deleteOrderModel,
-    addOrderItem,
-    getOrderItems
+    getAllOrders as getAllOrdersMod,
+    getOrderById as getOrderByIdMod,
+    createOrder as createOrderMod,  
+    updateOrder as updateOrderMod, 
+    deleteOrder as deleteOrderMod   
 } from "../models/orderModel.js";
+
+// Import from orderItemModel.js
+import {
+    addOrderItem as addOrderItemMod,
+    getOrderItems as getOrderItemsMod
+} from "../models/orderItemModel.js";
 
 import { getCustomerById as getCustomerByIdModel } from "../models/customerModel.js";
 import { getProductById as getProductByIdModel } from "../models/productModel.js";
 
 export const getAllOrders = async (req, res) => {
     try {
-        const orders = await getAllOrdersModel();
+        const orders = await getAllOrdersMod();
         
         // Get items for each order
         for (let order of orders) {
-            order.items = await getOrderItems(order.order_id);
+            order.items = await getOrderItemsMod(order.order_id);  // Use getOrderItemsMod
         }
         
         res.json(orders);
@@ -30,14 +34,14 @@ export const getAllOrders = async (req, res) => {
 export const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
-        const order = await getOrderByIdModel(id);
+        const order = await getOrderByIdMod(id);
         
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
         
         // Get items for this order
-        order.items = await getOrderItems(id);
+        order.items = await getOrderItemsMod(id);  // Use getOrderItemsMod
         
         res.json(order);
     } catch (error) {
@@ -48,7 +52,7 @@ export const getOrderById = async (req, res) => {
 
 export const createOrder = async (req, res) => {
     try {
-        const { customer_id, items } = req.body; // items should be array of {product_id, quantity}
+        const { customer_id, items } = req.body;
         
         // Basic validation
         if (!customer_id || !items || !items.length) {
@@ -62,7 +66,7 @@ export const createOrder = async (req, res) => {
         }
         
         // Create the order
-        const order = await createOrderModel(customer_id);
+        const order = await createOrderMod(customer_id);  // Fixed: use createOrderMod
         const orderId = order.insertId;
         
         // Add items to the order
@@ -76,12 +80,12 @@ export const createOrder = async (req, res) => {
             }
             
             // Add item to order_items table
-            await addOrderItem(orderId, product_id, quantity);
+            await addOrderItemMod(orderId, product_id, quantity);  // Use addOrderItemMod
         }
         
         // Get the complete order with items
-        const newOrder = await getOrderByIdModel(orderId);
-        newOrder.items = await getOrderItems(orderId);
+        const newOrder = await getOrderByIdMod(orderId); 
+        newOrder.items = await getOrderItemsMod(orderId); 
         
         res.status(201).json({ 
             message: 'Order created successfully',
@@ -99,12 +103,12 @@ export const updateOrder = async (req, res) => {
         const { order_status } = req.body;
         
         // Check if order exists first
-        const existingOrder = await getOrderByIdModel(id);
+        const existingOrder = await getOrderByIdMod(id);
         if (!existingOrder) {
             return res.status(404).json({ error: 'Order not found' });
         }
         
-        const order = await updateOrderModel(id, existingOrder.customer_id, order_status);
+        const order = await updateOrderMod(id, existingOrder.customer_id, order_status);
         
         res.json({ 
             message: 'Order updated successfully',
@@ -121,12 +125,12 @@ export const deleteOrder = async (req, res) => {
         const { id } = req.params;
         
         // Check if order exists first
-        const existingOrder = await getOrderByIdModel(id);
+        const existingOrder = await getOrderByIdMod(id);
         if (!existingOrder) {
             return res.status(404).json({ error: 'Order not found' });
         }
         
-        const order = await deleteOrderModel(id);
+        const order = await deleteOrderMod(id);
         res.json({ 
             message: 'Order deleted successfully',
             order 

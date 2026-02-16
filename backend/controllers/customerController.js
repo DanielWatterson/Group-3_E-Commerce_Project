@@ -18,11 +18,10 @@ export const getAllCustomers = async (req, res) => {
     }
 };
 
-// Rename this to match what your route expects (getCustomerById)
 export const getCustomerById = async (req, res) => {
     try {
         const { id } = req.params;
-        const customer = await getCustomerByIdModel(id);  // Use renamed import
+        const customer = await getCustomerByIdModel(id); 
         res.json(customer);
     } catch (error) {
         console.error('Error fetching customer:', error);
@@ -30,11 +29,10 @@ export const getCustomerById = async (req, res) => {
     }
 };
 
-// Keep as postCustomer (matches route)
 export const postCustomer = async (req, res) => {
     try {
         const { customer_name, email, password } = req.body;
-        const customer = await postCustomerModel(customer_name, email, password);  // Use renamed import
+        const customer = await postCustomerModel(customer_name, email, password);
         res.json(customer);
     } catch (error) {
         console.error('Error creating customer:', error);
@@ -47,7 +45,7 @@ export const patchCustomer = async (req, res) => {
     try {
         const { id } = req.params;
         const { customer_name, email, password } = req.body;
-        const customer = await patchCustomerModel(id, customer_name, email, password);  // Use renamed import
+        const customer = await patchCustomerModel(id, customer_name, email, password); 
         res.json(customer);
     } catch (error) {
         console.error('Error updating customer:', error);
@@ -55,11 +53,10 @@ export const patchCustomer = async (req, res) => {
     }
 };
 
-// Rename to deleteCustomer (matches route and import)
 export const deleteCustomer = async (req, res) => {
     try {
         const { id } = req.params;
-        const customer = await deleteCustomerModel(id);  // Use renamed import
+        const customer = await deleteCustomerModel(id);
         res.json(customer);
     } catch (error) {
         console.error('Error deleting customer:', error);
