@@ -1,5 +1,5 @@
 import { hashPassword } from "../middleware/auth.js";
-import { getAllCustomer, postCustomer } from "../model/usersDB.js";
+import { getAllCustomer, postCustomer } from "../models/usersDB.js";
 
 export const getCustomersCon = async (req, res) => {
     try {

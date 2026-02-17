@@ -1,9 +1,8 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import router from "./routes.js";
-import { getCustomersCon, postCustomerCon } from "./controller/usersCon.js";
-import { getSingleCustomer } from "./model/usersDB.js";
+import { getCustomersCon, postCustomerCon } from "./controllers/usersCon.js";
+import { getSingleCustomer } from "./models/usersDB.js";
 import { comparePassword, createToken } from "./middleware/auth.js";
 
 const app = express();
