@@ -1,25 +1,27 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+<script >
+export default {
+  computed: {
+    token() {
+      return localStorage.getItem("token");
+    }
+  }
+}
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+ 
+  <div>
+    <nav>
+      <router-link to="/">Home</router-link> |
+      <router-link to="/about">About</router-link> |
+      <router-link to="/customers">Customers</router-link> |
+      <router-link v-if="!token" to="/login">Login</router-link>
+    </nav>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
+  </div>
 
   <RouterView />
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
