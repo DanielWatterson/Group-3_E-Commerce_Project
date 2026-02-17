@@ -8,7 +8,7 @@ const store = createStore({
     mutations: {
         getCustomer(state, payload) {
             state.customer = payload;
-        },
+        },   
     },
     actions: {
         async getCustomer({ commit }) {
@@ -23,12 +23,23 @@ const store = createStore({
         async postCustomer({ commit }, payload) {
             try {
                 const res = await axios.post(`http://localhost:5050/customer`, payload);
-                commit("postCustomer", res.data);
+                commit("getCustomer", res.data);
             } catch (error) {
                 console.error("Failed to fetch postCustomer:", error);
                 throw error;
             }
         },
+        async login({ commit }, payload) {
+            try {
+                let {data} = await axios.post(`http://localhost:5050/login`, payload);
+                console.log({data});
+                localStorage.setItem("token", data.value);
+                alert(data.message);
+            } catch (error) {
+                console.error("Failed to fetch login:", error);
+                throw error;
+            }
+        }
 
     },
 });

@@ -9,11 +9,18 @@ export default {
         email: "",
         password: "",
       },
+      loginCustomer: {
+        email: "",
+        password: "",
+      }
     };
   },
   methods: {
     postCustomer() {
       this.$store.dispatch("postCustomer", this.newCustomer);
+    },
+    loginMethod() {
+      this.$store.dispatch("login", this.loginCustomer);
     },
   },
 };
@@ -24,17 +31,20 @@ export default {
   <section v-if="login">
     <h1>Login</h1>
     <form @submit.prevent="">
-      <label> Email:<input type="email" v-model="newCustomer.email" /> </label>
+      <label> Email:<input type="email" v-model="loginCustomer.email" /> </label>
       <br />
       <br />
       <label>
-        Password:<input type="password" v-model="newCustomer.password" />
+        Password:<input type="password" v-model="loginCustomer.password" />
       </label>
+      <br />
+      <br />
+      <button @click="loginMethod()">Login</button>
     </form>
   </section>
   <section v-else>
     <h1>Signup</h1>
-    <form>
+    <form @submit.prevent="">
       <label>
         Name:<input type="text" v-model="newCustomer.customer_name" />
       </label>
@@ -48,7 +58,7 @@ export default {
       </label>
       <br />
       <br />
-      <button @click="postCustomer">Register</button>
+      <button @click="postCustomer()">Register</button>
     </form>
   </section>
 </template>
