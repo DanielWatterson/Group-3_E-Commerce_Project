@@ -29,13 +29,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isAuthenticated = store.getters.isAuthenticated;
   
-// REDIRECTIONS (Logged in or not)
-
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Redirect to login page if not authenticated
     next('/login');
   } else if (to.path === '/login' && isAuthenticated) {
-    // Redirect to home if already authenticated
     next('/');
   } else {
     next();

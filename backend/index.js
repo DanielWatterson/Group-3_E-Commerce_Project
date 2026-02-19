@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import router from "./routes.js";
-import { getCustomersCon, postCustomerCon } from "./controllers/usersCon.js";
 import { getSingleCustomer } from "./models/usersDB.js";
 import { comparePassword, createToken } from "./middleware/auth.js";
 
@@ -9,16 +8,32 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.get("/customer", getCustomersCon);
-
-app.post("/customer", postCustomerCon);
-
 app.post("/login", async (req, res) => {
-  let { email, password } = req.body;
-  let hashpass = await getSingleCustomer(email);
-  let result = await comparePassword(password, hashpass);
-  let token = await createToken(email);
-  res.json({ message: "Login successful", value: result, value: token });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const customer = await getSingleCustomer(email);
+
+    if (!customer) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isPasswordValid = await comparePassword(password, customer.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const token = await createToken(email);
+    return res.json({ message: "Login successful", token });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
 app.use(router);
 
