@@ -3,12 +3,11 @@ const router = express.Router();
 
 // Import controllers
 import { 
-    getAllCustomers, 
     getCustomerById, 
-    postCustomer, 
     patchCustomer, 
     deleteCustomer 
 } from "./controllers/customerController.js";
+import { getCustomersCon, postCustomerCon } from "./controllers/usersCon.js";
 
 import { 
     getAllProducts, 
@@ -43,9 +42,9 @@ import {
 } from "./controllers/paymentController.js";
 
 // Customer routes
-router.get("/customer", getAllCustomers);
+router.get("/customer", getCustomersCon);
 router.get("/customer/:id", getCustomerById);
-router.post("/customer", postCustomer);
+router.post("/customer", postCustomerCon);
 router.patch("/customer/:id", patchCustomer);
 router.delete("/customer/:id", deleteCustomer);
 

@@ -44,19 +44,21 @@ const store = createStore({
         let { data } = await axios.post(`http://localhost:5050/login`, payload);
         console.log({ data });
 
-        if (data.token) {
-          commit("SET_TOKEN", data.token);
-          // Set default Authorization header for future requests
-          axios.defaults.headers.common["Authorization"] =
-            `Bearer ${data.token}`;
-          alert(data.message || "Login successful!");
-        } else {
-          alert(data.message || "Login failed");
+        if (!data?.token) {
+          throw new Error(data?.message || "Login failed");
         }
+
+        commit("SET_TOKEN", data.token);
+        axios.defaults.headers.common["Authorization"] =
+          `Bearer ${data.token}`;
+        alert(data.message || "Login successful!");
+        return true;
       } catch (error) {
         console.error("Failed to fetch login:", error);
         alert(
-          error.response?.data?.message || "Login failed. Please try again.",
+          error.response?.data?.message ||
+            error.message ||
+            "Login failed. Please try again.",
         );
         throw error;
       }

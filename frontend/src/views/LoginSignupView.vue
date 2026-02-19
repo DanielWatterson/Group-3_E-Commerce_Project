@@ -12,7 +12,7 @@ export default {
       loginCustomer: {
         email: "",
         password: "",
-      }
+      },
     };
   },
   methods: {
@@ -20,8 +20,7 @@ export default {
       try {
         await this.$store.dispatch("postCustomer", this.newCustomer);
         alert("Registration successful! Please login.");
-        this.login = true; // Switch to login form
-        // Clear signup form
+        this.login = true; 
         this.newCustomer = {
           customer_name: "",
           email: "",
@@ -33,14 +32,18 @@ export default {
     },
     async loginMethod() {
       try {
-        await this.$store.dispatch("login", this.loginCustomer);
-        // Clear login form
-        this.loginCustomer = {
-          email: "",
-          password: "",
-        };
-        // Redirect to home page after successful login
-        this.$router.push('/');
+        const didLogin = await this.$store.dispatch(
+          "login",
+          this.loginCustomer,
+        );
+
+        if (didLogin) {
+          this.loginCustomer = {
+            email: "",
+            password: "",
+          };
+          this.$router.push("/");
+        }
       } catch (error) {
         console.error("Login failed:", error);
       }
@@ -53,28 +56,32 @@ export default {
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-header">
-        <h1>{{ login ? 'Welcome Back' : 'Create Account' }}</h1>
-        <p>{{ login ? 'Please login to your account' : 'Sign up to get started' }}</p>
+        <h1>{{ login ? "Welcome Back" : "Create Account" }}</h1>
+        <p>
+          {{
+            login ? "Please login to your account" : "Sign up to get started"
+          }}
+        </p>
       </div>
 
       <div class="toggle-section">
-        <button 
-          @click="login = !login" 
-          class="toggle-btn"
-        >
-          {{ login ? 'Need an account? Sign up' : 'Already have an account? Login' }}
+        <button @click="login = !login" class="toggle-btn">
+          {{
+            login
+              ? "Need an account? Sign up"
+              : "Already have an account? Login"
+          }}
         </button>
       </div>
 
       <div class="form-section">
-        <!-- Login Form -->
         <form v-if="login" @submit.prevent="loginMethod" class="auth-form">
           <div class="form-group">
             <label for="email">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               id="email"
-              v-model="loginCustomer.email" 
+              v-model="loginCustomer.email"
               placeholder="Enter your email"
               required
             />
@@ -82,10 +89,10 @@ export default {
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               id="password"
-              v-model="loginCustomer.password" 
+              v-model="loginCustomer.password"
               placeholder="Enter your password"
               required
             />
@@ -94,14 +101,13 @@ export default {
           <button type="submit" class="submit-btn">Login</button>
         </form>
 
-        <!-- Signup Form -->
         <form v-else @submit.prevent="postCustomer" class="auth-form">
           <div class="form-group">
             <label for="name">Full Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               id="name"
-              v-model="newCustomer.customer_name" 
+              v-model="newCustomer.customer_name"
               placeholder="Enter your full name"
               required
             />
@@ -109,10 +115,10 @@ export default {
 
           <div class="form-group">
             <label for="signup-email">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               id="signup-email"
-              v-model="newCustomer.email" 
+              v-model="newCustomer.email"
               placeholder="Enter your email"
               required
             />
@@ -120,10 +126,10 @@ export default {
 
           <div class="form-group">
             <label for="signup-password">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               id="signup-password"
-              v-model="newCustomer.password" 
+              v-model="newCustomer.password"
               placeholder="Create a password (min. 6 characters)"
               required
               minlength="6"
@@ -152,7 +158,7 @@ export default {
   padding: 2.5rem;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
 .auth-header {
@@ -224,7 +230,9 @@ export default {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
 }
 
 .submit-btn:hover {
