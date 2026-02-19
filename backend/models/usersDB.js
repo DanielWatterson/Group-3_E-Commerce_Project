@@ -17,14 +17,20 @@ export const postCustomer = async (customer_name, email, password) => {
   }
 };
 
-export const getSingleCustomer = async (id) => {
+export const getSingleCustomer = async (email) => {
   try {
-    const [[{password}]] = await pool.query("SELECT * FROM customer WHERE email = ?", [
-      id,
-    ]);
-    return password;
+    const [rows] = await pool.query(
+      "SELECT customer_id, email, password FROM customer WHERE email = ? LIMIT 1",
+      [email],
+    );
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return rows[0];
   } catch (error) {
-    console.error("Error inserting customer:", error);
-    return error;
+    console.error("Error fetching customer:", error);
+    throw error;
   }
 };
