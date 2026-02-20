@@ -1,4 +1,4 @@
-CREATE DATABASE  IF NOT EXISTS `e_commerce` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE  IF NOT EXISTS `e_commerce` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `e_commerce`;
 -- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
 --
@@ -32,7 +32,7 @@ CREATE TABLE `customer` (
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `email` (`email`),
   CONSTRAINT `chk_email_format` CHECK ((`email` like _utf8mb4'%@%.%'))
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,7 +73,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,2,2,'2026-02-19 09:56:12'),(2,2,3,1,'2026-02-19 09:56:12'),(3,3,1,3,'2026-02-19 09:56:12');
+INSERT INTO `order_items` VALUES (1,1,2,2,'2026-02-20 11:32:53'),(2,2,3,1,'2026-02-20 11:32:53'),(3,3,1,3,'2026-02-20 11:32:53');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -101,7 +101,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,2,'pending','2026-02-19 09:56:12'),(2,3,'pending','2026-02-19 09:56:12'),(3,1,'pending','2026-02-19 09:56:12');
+INSERT INTO `orders` VALUES (1,2,'pending','2026-02-20 11:32:53'),(2,3,'pending','2026-02-20 11:32:53'),(3,1,'pending','2026-02-20 11:32:53');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -132,7 +132,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,49.99,'2026-02-19 09:56:12','completed','credit_card'),(2,2,99.99,'2026-02-19 09:56:12','failed','paypal'),(3,3,149.99,'2026-02-19 09:56:12','pending','bank_transfer');
+INSERT INTO `payments` VALUES (1,1,7999.98,'2026-02-20 11:32:53','completed','credit_card'),(2,2,4999.99,'2026-02-20 11:32:53','failed','paypal'),(3,3,8999.97,'2026-02-20 11:32:53','pending','bank_transfer');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -161,7 +161,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Basic Wooden Desk',999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp'),(2,'Standard Wooden Desk',1299.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg'),(3,'Premium Wooden Desk',1899.99,25,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg'),(4,'Deluxe Wooden Desk',2199.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg'),(5,'Custom Desk - Entry',999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(6,'Custom Desk - Basic',1499.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(7,'Custom Desk - Plus',1999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(8,'Custom Desk - Pro',2499.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(9,'Custom Desk - Elite',2999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(10,'Custom Desk - Premium',3499.99,10,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(11,'Custom Desk - Luxury',3999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
+INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp'),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg'),(3,'Premium Wooden Desk',4999.99,25,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg'),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg'),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(10,'Custom Desk - Premium',7999.99,10,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -174,4 +174,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-19  9:57:24
+-- Dump completed on 2026-02-20 11:36:52

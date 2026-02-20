@@ -1,3 +1,4 @@
+// productController.js
 import {
     getAllProducts as getAllProductsModel,
     getProductById as getProductByIdModel,

@@ -1,13 +1,22 @@
 import express from "express";
 const router = express.Router();
 
-// Import controllers
+// Import ALL customer controller functions
 import { 
+    getAllCustomers,
     getCustomerById, 
-    patchCustomer, 
-    deleteCustomer 
+    getCustomerByEmail,
+    checkEmailExists,
+    postCustomer,
+    patchCustomer,     
+    deleteCustomer     
 } from "./controllers/customerController.js";
-import { getCustomersCon, postCustomerCon } from "./controllers/usersCon.js";
+
+// Import usersCon with aliases to avoid conflicts
+import { 
+    getCustomersCon, 
+    postCustomerCon 
+} from "./controllers/usersCon.js";
 
 import { 
     getAllProducts, 
@@ -41,34 +50,40 @@ import {
     deletePayment 
 } from "./controllers/paymentController.js";
 
-// Customer routes
-router.get("/customer", getCustomersCon);
-router.get("/customer/:id", getCustomerById);
-router.post("/customer", postCustomerCon);
-router.patch("/customer/:id", patchCustomer);
-router.delete("/customer/:id", deleteCustomer);
+// CUSTOMER ROUTES
+router.get("/customer", getAllCustomers);
+router.get("/customer/id/:id", getCustomerById);
+router.get("/customer/email/:email", getCustomerByEmail);
+router.get("/customer/check-email", checkEmailExists);
+router.post("/customer", postCustomer);
+router.patch("/customer/:id", patchCustomer);    
+router.delete("/customer/:id", deleteCustomer);  
 
-// Product routes
+// USER ROUTES (from usersCon.js)
+router.get("/users-con", getCustomersCon);
+router.post("/users-con", postCustomerCon);
+
+// PRODUCT ROUTES
 router.get("/products", getAllProducts);
 router.get("/products/:id", getProductById);
 router.post("/products", createProduct);
 router.patch("/products/:id", updateProduct);
 router.delete("/products/:id", deleteProduct);
 
-// Order routes
+// ORDER ROUTES
 router.get("/orders", getAllOrders);
 router.get("/orders/:id", getOrderById);
 router.post("/orders", createOrder);
 router.patch("/orders/:id", updateOrder);
 router.delete("/orders/:id", deleteOrder);
 
-// Order Item routes
+// ORDER ITEM ROUTES
 router.get("/orders/:id/items", getOrderItems);
 router.post("/orders/:id/items", addOrderItems);
 router.patch("/orders/items/:orderItemId", updateOrderItemQuantity);
 router.delete("/orders/items/:orderItemId", deleteOrderItem);
 
-// Payment routes
+// PAYMENT ROUTES
 router.get("/payments", getAllPayments);
 router.get("/payments/:id", getPaymentById);
 router.get("/payments/orders/:orderId", getPaymentsByOrderId);
