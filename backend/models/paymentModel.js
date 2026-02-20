@@ -30,13 +30,44 @@ export const getPaymentsByOrderId = async (order_id) => {
     return rows;
 };
 
-// Create a new payment
-export const createPayment = async (order_id, amount, payment_method, payment_status = 'pending') => {
-    const [rows] = await pool.query(
-        "INSERT INTO payments (order_id, amount, payment_method, payment_status) VALUES (?, ?, ?, ?)",
-        [order_id, amount, payment_method, payment_status]
-    );
-    return rows;
+export const getOrderTotal = async (order_id) => {
+    const [rows] = await pool.query(`
+        SELECT SUM(oi.quantity * p.product_price) as total
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE oi.order_id = ?
+    `, [order_id]);
+    return rows[0].total;
+};
+
+export const createPayment = async (req, res) => {
+    try {
+        const { order_id, payment_method, payment_status } = req.body;
+        
+        if (!order_id || !payment_method) {
+            return res.status(400).json({ error: 'Order ID and payment method are required' });
+        }
+        
+        // Check if order exists
+        const order = await getOrderById(order_id);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+        
+        // Create payment - amount is calculated in the model
+        const payment = await createPaymentModel(order_id, payment_method, payment_status);
+        
+        // Get the created payment
+        const newPayment = await getPaymentByIdModel(payment.insertId);
+        
+        res.status(201).json({ 
+            message: 'Payment created successfully',
+            payment: newPayment
+        });
+    } catch (error) {
+        console.error('Error creating payment:', error);
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
 };
 
 // Update payment status

@@ -4,7 +4,8 @@ import {
     getPaymentsByOrderId as getPaymentsByOrderIdModel,
     createPayment as createPaymentModel,
     updatePaymentStatus as updatePaymentStatusModel,
-    deletePayment as deletePaymentModel
+    deletePayment as deletePaymentModel,
+    getOrderTotal as getOrderTotalModel 
 } from "../models/paymentModel.js";
 
 import { getOrderById } from "../models/orderModel.js";
@@ -39,7 +40,6 @@ export const getPaymentsByOrderId = async (req, res) => {
     try {
         const { orderId } = req.params;
         
-        // Check if order exists
         const order = await getOrderById(orderId);
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
@@ -53,28 +53,40 @@ export const getPaymentsByOrderId = async (req, res) => {
     }
 };
 
+//  This function uses the imported getOrderTotalModel
 export const createPayment = async (req, res) => {
     try {
-        const { order_id, amount, payment_method, payment_status } = req.body;
+        const { order_id, payment_method, payment_status } = req.body;
         
-        // Validation
-        if (!order_id || !amount || !payment_method) {
-            return res.status(400).json({ error: 'Order ID, amount, and payment method are required' });
+        if (!order_id || !payment_method) {
+            return res.status(400).json({ error: 'Order ID and payment method are required' });
         }
         
-        // Check if order exists
         const order = await getOrderById(order_id);
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
         
-        const payment = await createPaymentModel(order_id, amount, payment_method, payment_status || 'pending');
+        // Calculate amount using the imported model function
+        const calculatedAmount = await getOrderTotalModel(order_id);
         
-        // Get the created payment
+        if (!calculatedAmount || calculatedAmount <= 0) {
+            return res.status(400).json({ error: 'Order has no items or invalid total' });
+        }
+        
+        // Pass calculated amount to createPaymentModel
+        const payment = await createPaymentModel(
+            order_id, 
+            calculatedAmount, 
+            payment_method, 
+            payment_status || 'pending'
+        );
+        
         const newPayment = await getPaymentByIdModel(payment.insertId);
         
         res.status(201).json({ 
             message: 'Payment created successfully',
+            amount: calculatedAmount,
             payment: newPayment
         });
     } catch (error) {
@@ -92,15 +104,12 @@ export const updatePaymentStatus = async (req, res) => {
             return res.status(400).json({ error: 'Payment status is required' });
         }
         
-        // Check if payment exists
         const existingPayment = await getPaymentByIdModel(id);
         if (!existingPayment) {
             return res.status(404).json({ error: 'Payment not found' });
         }
         
-        const result = await updatePaymentStatusModel(id, payment_status);
-        
-        // Get updated payment
+        await updatePaymentStatusModel(id, payment_status);
         const updatedPayment = await getPaymentByIdModel(id);
         
         res.json({ 
@@ -117,18 +126,14 @@ export const deletePayment = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Check if payment exists
         const existingPayment = await getPaymentByIdModel(id);
         if (!existingPayment) {
             return res.status(404).json({ error: 'Payment not found' });
         }
         
-        const result = await deletePaymentModel(id);
+        await deletePaymentModel(id);
         
-        res.json({ 
-            message: 'Payment deleted successfully',
-            result
-        });
+        res.json({ message: 'Payment deleted successfully' });
     } catch (error) {
         console.error('Error deleting payment:', error);
         res.status(500).json({ error: 'Internal Server Error' });
