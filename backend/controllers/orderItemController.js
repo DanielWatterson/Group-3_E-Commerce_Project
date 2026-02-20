@@ -1,4 +1,4 @@
-// Rename the imports to avoid conflicts
+// orderItemController.js
 import {
     getOrderItems as getOrderItemsModel,
     addOrderItem as addOrderItemModel,

@@ -1,3 +1,4 @@
+// paymentController.js
 import {
     getAllPayments as getAllPaymentsModel,
     getPaymentById as getPaymentByIdModel,

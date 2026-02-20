@@ -1,3 +1,4 @@
+//customerController.js
 import {
     getAllCustomers as getAllCustomersModel,
     getCustomerById as getCustomerByIdModel,
@@ -6,7 +7,7 @@ import {
     postCustomer as postCustomerModel,
     patchCustomer as patchCustomerModel,
     deleteCustomer as deleteCustomerModel,
-    authenticateCustomer as authenticateCustomerModel 
+    // authenticateCustomer as authenticateCustomerModel 
 } from "../models/customerModel.js";
 
 import { hashPassword } from "../middleware/auth.js";
@@ -153,42 +154,42 @@ export const deleteCustomer = async (req, res) => {
     }
 };
 
-// 🔥 NEW: Login endpoint
-export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+// Login endpoint
+// export const login = async (req, res) => {
+//     try {
+//         const { email, password } = req.body;
         
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
-        }
+//         if (!email || !password) {
+//             return res.status(400).json({ error: 'Email and password are required' });
+//         }
         
-        // Get customer by email
-        const customer = await getCustomerByEmailModel(email);
+//         // Get customer by email
+//         const customer = await getCustomerByEmailModel(email);
         
-        if (!customer) {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
+//         if (!customer) {
+//             return res.status(401).json({ error: 'Invalid email or password' });
+//         }
         
-        // 🔥 COMPARE with bcrypt
-        const isPasswordValid = await comparePassword(password, customer.password);
+//         // COMPARE with bcrypt
+//         const isPasswordValid = await comparePassword(password, customer.password);
         
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
+//         if (!isPasswordValid) {
+//             return res.status(401).json({ error: 'Invalid email or password' });
+//         }
         
-        // Generate token
-        const token = await createToken(email);
+//         // Generate token
+//         const token = await createToken(email);
         
-        // Remove password from response
-        delete customer.password;
+//         // Remove password from response
+//         delete customer.password;
         
-        res.json({ 
-            message: 'Login successful',
-            token,
-            customer
-        });
-    } catch (error) {
-        console.error('Error logging in:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+//         res.json({ 
+//             message: 'Login successful',
+//             token,
+//             customer
+//         });
+//     } catch (error) {
+//         console.error('Error logging in:', error);
+//         res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// };
