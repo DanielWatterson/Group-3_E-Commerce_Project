@@ -4,4 +4,6 @@
     --dark: #0f172a;
     --light: #f1f5f9;
     --shadow: 0 1px 5px rgba(104, 104, 104, 0.8);
-} 
+    margin: 0;
+}
+
