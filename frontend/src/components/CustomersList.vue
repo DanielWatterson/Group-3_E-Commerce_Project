@@ -9,4 +9,12 @@ export default {
 
 <template>
 <p>{{ customerData }}</p>
+<Button label="Click Me" icon="pi pi-check" />
+
 </template>
+
+<style scoped>
+p {
+  color: black;
+}
+</style>

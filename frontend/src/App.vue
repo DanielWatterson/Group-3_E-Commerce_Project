@@ -1,126 +1,151 @@
 <script>
+import Menubar from 'primevue/menubar';
+import Button from 'primevue/button';
+
 export default {
-  computed: {
-    isAuthenticated() {
-      return this.$store.getters.isAuthenticated;
-    }
+  components: {
+    Menubar,
+    Button
+  },
+  data() {
+    return {
+      isScrolled: false,
+      items: [
+        {
+          label: 'Shop',
+          icon: 'pi pi-shopping-bag',
+        },
+        {
+          label: 'Custom Builder',
+          icon: 'pi pi-cog',
+        },
+        {
+          label: 'Virtual Showrooms',
+          icon: 'pi pi-images',
+        },
+        {
+          label: 'B2B',
+          icon: 'pi pi-briefcase',
+        }
+      ]
+    };
   },
   methods: {
-    logout() {
-      this.$store.dispatch('logout');
-      this.$router.push('/');
+    handleScroll() {
+      this.isScrolled = window.scrollY > 10;
     }
+  },
+  mounted() {
+    window.addEventListener('scroll', this.handleScroll);
+  },
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.handleScroll);
   }
-}
+};
 </script>
+
+
 
 <template>
   <div class="app-container">
-    <header>
-      <nav>
-        <div class="nav-links">
-          <router-link to="/">Home</router-link> |
-          <router-link to="/customers">Customers</router-link>
-        </div>
-        <div class="auth-section">
-          <template v-if="!isAuthenticated">
-            <router-link to="/login" class="login-btn">Login / Signup</router-link>
-          </template>
-          <template v-else>
-            <span class="welcome-text">Welcome!</span>
-            <button @click="logout" class="logout-btn">Logout</button>
-          </template>
-        </div>
-      </nav>
+    <header :class="{ 'scrolled': isScrolled }">
+      <Menubar :model="items" class="custom-menubar">
+        <template #start>
+          <div class="logo">
+            <img src="https://via.placeholder.com/150x50?text=LumberLink+Desks" alt="Logo" />
+          </div>
+        </template>
+        <template #end>
+          <div class="auth-section">
+            <Button icon="pi pi-search" class="p-button-rounded p-button-text" />
+            <Button icon="pi pi-user" class="p-button-rounded p-button-text" />
+            <Button icon="pi pi-shopping-cart" class="p-button-rounded p-button-text" />
+          </div>
+        </template>
+      </Menubar>
     </header>
 
+    <div class="hero-section">
+      <div class="hero-content">
+        <h1>Workspaces Redefined.</h1>
+        <p>Sustainable wood meets high-performance tech. Custom built for your home, office, or battle station.</p>
+        <div class="hero-buttons">
+          <Button label="Shop Now" class="p-button-rounded shop-button" />
+          <Button label="Design Your Desk" class="p-button-rounded p-button-outlined" />
+        </div>
+      </div>
+    </div>
+
+    
     <main class="main-content">
       <RouterView />
     </main>
   </div>
 </template>
 
+
 <style scoped>
 .app-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 header {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  padding: 1rem 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: background 0.3s ease;
+  padding: 0;
 }
 
-nav {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.nav-links a:hover {
-  color: #667eea;
-}
-
-.nav-links a.router-link-active {
-  color: #667eea;
-  font-weight: 600;
-}
-
-.auth-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.welcome-text {
-  color: #667eea;
-  font-weight: 500;
-}
-
-.login-btn {
-  text-decoration: none;
-  color: #667eea;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
-
-.login-btn:hover {
-  background: #667eea;
-  color: white;
-}
-
-.logout-btn {
-  background: #ff4757;
-  color: white;
+header:not(.scrolled) .custom-menubar {
+  background: transparent;
   border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.3s;
 }
 
-.logout-btn:hover {
-  background: #ff6b81;
+header.scrolled .custom-menubar {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo img {
+  height: 40px;
+}
+
+.hero-section {
+  background-image: url('https://via.placeholder.com/1920x600');
+  background-size: cover;
+  background-position: center;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  margin-top: 70px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.shop-button {
+  background-color: #8B4513;
+  border-color: #8B4513;
+  color: white;
 }
 
 .main-content {
@@ -129,3 +154,6 @@ nav {
   padding: 0 2rem;
 }
 </style>
+
+
+
