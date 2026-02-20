@@ -76,6 +76,7 @@ export default {
       </div>
     </div>
 
+    
     <main class="main-content">
       <RouterView />
     </main>
