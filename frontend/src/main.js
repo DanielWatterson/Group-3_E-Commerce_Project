@@ -21,7 +21,7 @@ import InputNumber from 'primevue/inputnumber'
 import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
 import Badge from 'primevue/badge'
-import ToastService from 'primevue/toastservice'; // Importing toast from Primevue
+import ToastService from 'primevue/toastservice'; 
 
 const app = createApp(App)
 
