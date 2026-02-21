@@ -435,6 +435,10 @@ export default {
   color: inherit;
 }
 
+.woodcraft-menubar :deep(.p-menubar-root-list) {
+  flex-wrap: nowrap;
+}
+
 .mobile-sidebar-content {
   display: flex;
   flex-direction: column;
@@ -551,6 +555,31 @@ export default {
   color: #ffffff;
   z-index: 5;
   pointer-events: none;
+}
+
+@media (max-width: 1160px) {
+  .woodcraft-menubar {
+    padding: 0.65rem 1rem;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .menu-link {
+    padding: 0.45rem 0.5rem;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  .menu-icon {
+    font-size: 0.85rem;
+  }
+
+  .icon-btn {
+    width: 2.05rem;
+    height: 2.05rem;
+  }
 }
 
 @media (max-width: 960px) {

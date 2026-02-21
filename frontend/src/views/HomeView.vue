@@ -127,10 +127,6 @@ export default {
           src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1000&q=80"
           alt="Woodworking and electronics integration"
         />
-        <div class="media-badge">
-          <strong>10ms</strong>
-          <span>Control latency</span>
-        </div>
       </div>
     </section>
 
@@ -143,10 +139,7 @@ export default {
           room dimensions before checkout.
         </p>
         <div class="showroom-media">
-          <img
-            src="https://images.unsplash.com/photo-1616628182509-6f6f9d152e5e?auto=format&fit=crop&w=1400&q=80"
-            alt="Virtual desk placement preview"
-          />
+         
           <span class="preview-chip">AR-ready room preview</span>
         </div>
         <div class="showroom-actions">

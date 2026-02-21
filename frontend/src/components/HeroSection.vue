@@ -15,19 +15,16 @@ export default {
 <template>
   <section class="hero-wrap">
     <div class="hero-section">
-      <button
-        type="button"
-        class="hero-pane pane-left"
-        aria-label="Best Buys for Gaming PC Desks"
-        @click="goToGamingDeals"
-      >
+      <button type="button" class="hero-pane pane-left" aria-label="Best Buys for Gaming PC Desks"
+        @click="goToGamingDeals">
         <div class="pane-content mobile-pane-content">
           <span class="pane-badge">Pro Gaming Series</span>
           <h2 class="pane-title">Forge Your Command Center</h2>
           <p class="pane-copy">Engineered for endurance. Integrated power for zero lag.</p>
           <span class="pane-cta">
+            <i class="pi pi-arrow-left"></i>
             Shop Gaming
-            <i class="pi pi-arrow-right"></i>
+
           </span>
         </div>
         <div class="desktop-caption desktop-caption-left">
@@ -36,24 +33,19 @@ export default {
         </div>
       </button>
 
-      <button
-        type="button"
-        class="hero-pane pane-right"
-        aria-label="Work Desk Specials"
-        @click="goToWorkDeals"
-      >
+      <button type="button" class="hero-pane pane-right" aria-label="Work Desk Specials" @click="goToWorkDeals">
         <div class="pane-content mobile-pane-content">
-          <span class="pane-badge">The Heritage Collection</span>
-          <h2 class="pane-title">One of a Kind</h2>
-          <p class="pane-copy">Timeless craftsmanship. 100% recycled premium hardwoods.</p>
+          <span class="pane-badge">Ergonomic Pro Series</span>
+          <h2 class="pane-title">Create Your Comfort Zone</h2>
+          <p class="pane-copy">Designed for comfort. Engineered for productivity and well-being.</p>
           <span class="pane-cta">
-            Design Your Desk
+            Shop Ergonomic
             <i class="pi pi-arrow-right"></i>
           </span>
         </div>
         <div class="desktop-caption desktop-caption-right">
-          <span class="desktop-badge">The Heritage Collection</span>
-          <p>Timeless craftsmanship. 100% recycled premium hardwoods.</p>
+          <span class="desktop-badge">Ergonomic Pro Series</span>
+          <p>Designed for comfort. Engineered for productivity.</p>
         </div>
       </button>
 
@@ -71,7 +63,7 @@ export default {
   --split-gap: 6px;
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  min-height: 93vh;
   overflow: hidden;
   background: #1f1812;
 }
@@ -122,12 +114,10 @@ export default {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgba(20, 16, 12, 0.36) 0%,
-    rgba(20, 16, 12, 0.08) 48%,
-    rgba(20, 16, 12, 0.32) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(20, 16, 12, 0.36) 0%,
+      rgba(20, 16, 12, 0.08) 48%,
+      rgba(20, 16, 12, 0.32) 100%);
 }
 
 .mobile-pane-content {
@@ -172,6 +162,11 @@ export default {
 
 .pane-right .desktop-caption p {
   color: rgba(245, 241, 236, 0.92);
+}
+
+.pane-right .mobile-pane-content {
+  margin-left: auto;
+  text-align: right;
 }
 
 .pane-content {
@@ -233,7 +228,8 @@ export default {
   }
 }
 
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
   .hero-pane:active {
     transform: scale(1.008);
     filter: saturate(1.08) brightness(1.03);
@@ -246,8 +242,7 @@ export default {
 
 @media (max-width: 960px) {
   .hero-wrap {
-    padding: 0.8rem 0.8rem 1rem;
-    background: #f4f1ec;
+    background: #444141;
   }
 
   .hero-section {
@@ -264,7 +259,7 @@ export default {
     inset: auto;
     width: 100%;
     min-height: 290px;
-    border-radius: 22px;
+    /* border-radius: 22px; */
     overflow: hidden;
     align-items: flex-end;
     transform: none;
@@ -305,9 +300,7 @@ export default {
     background: rgba(255, 255, 255, 0.85);
   }
 
-  .hero-overlay {
-    display: none;
-  }
+
 
   .pane-content {
     max-width: 95%;
