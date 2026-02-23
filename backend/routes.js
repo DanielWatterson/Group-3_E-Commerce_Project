@@ -15,7 +15,8 @@ import {
 // Import usersCon with aliases to avoid conflicts
 import { 
     getCustomersCon, 
-    postCustomerCon 
+    postCustomerCon,
+    loginCon
 } from "./controllers/usersCon.js";
 
 import { 
@@ -62,6 +63,7 @@ router.delete("/customer/:id", deleteCustomer);
 // USER ROUTES (from usersCon.js)
 router.get("/users-con", getCustomersCon);
 router.post("/users-con", postCustomerCon);
+router.post("/login", loginCon);
 
 // PRODUCT ROUTES
 router.get("/products", getAllProducts);
