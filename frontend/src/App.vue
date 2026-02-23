@@ -1,114 +1,114 @@
 <script>
-import Menubar from 'primevue/menubar'
-import Button from 'primevue/button'
-import Badge from 'primevue/badge'
-import Drawer from 'primevue/drawer'
-import InputText from 'primevue/inputtext'
+import Menubar from "primevue/menubar";
+import Button from "primevue/button";
+import Badge from "primevue/badge";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     Menubar,
     Button,
     Badge,
     Drawer,
-    InputText
+    InputText,
   },
   data() {
     return {
       isScrolled: false,
       isNavbarHovered: false,
       isMobileSidebarVisible: false,
-      mobileSearchQuery: ''
-    }
+      mobileSearchQuery: "",
+    };
   },
   computed: {
     menuItems() {
       return [
         {
-          label: 'Home',
-          icon: 'pi pi-home',
-          command: () => this.navigateTo('/')
+          label: "Home",
+          icon: "pi pi-home",
+          command: () => this.navigateTo("/"),
         },
         {
-          label: 'Shop',
-          icon: 'pi pi-shopping-bag',
-          command: () => this.navigateTo('/products')
+          label: "Shop",
+          icon: "pi pi-shopping-bag",
+          command: () => this.navigateTo("/products"),
         },
         {
-          label: 'Custom Builder',
-          icon: 'pi pi-pencil',
-          command: () => this.navigateTo('/custom-builder')
+          label: "Custom Builder",
+          icon: "pi pi-pencil",
+          command: () => this.navigateTo("/custom-builder"),
         },
         {
-          label: 'Virtual Showrooms',
-          icon: 'pi pi-desktop',
-          command: () => this.navigateTo('/virtual-showrooms')
+          label: "Virtual Showrooms",
+          icon: "pi pi-desktop",
+          command: () => this.navigateTo("/virtual-showrooms"),
         },
         {
-          label: 'B2B',
-          icon: 'pi pi-briefcase',
-          command: () => this.navigateTo('/b2b')
-        }
-      ]
+          label: "B2B",
+          icon: "pi pi-briefcase",
+          command: () => this.navigateTo("/b2b"),
+        },
+      ];
     },
     isHomeRoute() {
-      return this.$route.path === '/'
+      return this.$route.path === "/";
     },
     isNavbarOpaque() {
-      return !this.isHomeRoute || this.isScrolled || this.isNavbarHovered
+      return !this.isHomeRoute || this.isScrolled || this.isNavbarHovered;
     },
     navbarClasses() {
       return {
-        'is-opaque': this.isNavbarOpaque,
-        'is-transparent': !this.isNavbarOpaque
-      }
+        "is-opaque": this.isNavbarOpaque,
+        "is-transparent": !this.isNavbarOpaque,
+      };
     },
     pageContentClasses() {
       return {
-        'home-overlay': this.isHomeRoute
-      }
+        "home-overlay": this.isHomeRoute,
+      };
     },
     cartCount() {
-      return this.$store.getters.cartCount || 0
-    }
+      return this.$store.getters.cartCount || 0;
+    },
   },
   mounted() {
-    window.addEventListener('scroll', this.handleScroll, { passive: true })
-    this.handleScroll()
+    window.addEventListener("scroll", this.handleScroll, { passive: true });
+    this.handleScroll();
   },
   beforeUnmount() {
-    window.removeEventListener('scroll', this.handleScroll)
+    window.removeEventListener("scroll", this.handleScroll);
   },
   watch: {
-    '$route.path'() {
-      this.isNavbarHovered = false
-      this.isMobileSidebarVisible = false
-      this.$nextTick(() => this.handleScroll())
-    }
+    "$route.path"() {
+      this.isNavbarHovered = false;
+      this.isMobileSidebarVisible = false;
+      this.$nextTick(() => this.handleScroll());
+    },
   },
   methods: {
     handleScroll() {
-      this.isScrolled = window.scrollY > 10
+      this.isScrolled = window.scrollY > 10;
     },
     openMobileSidebar() {
-      this.isMobileSidebarVisible = true
+      this.isMobileSidebarVisible = true;
     },
     closeMobileSidebar() {
-      this.isMobileSidebarVisible = false
+      this.isMobileSidebarVisible = false;
     },
     handleMobileItemClick(item) {
-      item.command()
-      this.closeMobileSidebar()
+      item.command();
+      this.closeMobileSidebar();
     },
     navigateTo(path) {
       if (this.$route.path !== path) {
-        this.$router.push(path)
+        this.$router.push(path);
       }
-      this.closeMobileSidebar()
-    }
-  }
-}
+      this.closeMobileSidebar();
+    },
+  },
+};
 </script>
 
 <template>
@@ -138,7 +138,11 @@ export default {
         </template>
 
         <template #item="{ item, props }">
-          <a v-bind="props.action" class="menu-link" @click.prevent="item.command">
+          <a
+            v-bind="props.action"
+            class="menu-link"
+            @click.prevent="item.command"
+          >
             <i :class="item.icon" class="menu-icon"></i>
             <span>{{ item.label }}</span>
           </a>
@@ -171,7 +175,12 @@ export default {
                 aria-label="Shopping cart"
                 @click="navigateTo('/cart')"
               />
-              <Badge v-if="cartCount > 0" :value="cartCount" severity="contrast" class="cart-badge" />
+              <Badge
+                v-if="cartCount > 0"
+                :value="cartCount"
+                severity="contrast"
+                class="cart-badge"
+              />
             </div>
           </div>
         </template>
@@ -240,7 +249,12 @@ export default {
               class="mobile-footer-btn mobile-footer-cart"
               @click="navigateTo('/cart')"
             />
-            <Badge v-if="cartCount > 0" :value="cartCount" severity="contrast" class="mobile-cart-badge" />
+            <Badge
+              v-if="cartCount > 0"
+              :value="cartCount"
+              severity="contrast"
+              class="mobile-cart-badge"
+            />
           </div>
         </div>
       </div>
@@ -260,7 +274,7 @@ export default {
 .app-shell {
   min-height: 100vh;
   background: #f4f1ec;
-  font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .top-nav {
@@ -363,7 +377,9 @@ export default {
   padding: 0.52rem 0.72rem;
   text-decoration: none;
   font-weight: 500;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .top-nav.is-transparent .menu-link:hover {
@@ -388,7 +404,9 @@ export default {
 .icon-btn {
   width: 2.25rem;
   height: 2.25rem;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
 .top-nav.is-transparent .icon-btn.p-button:hover {
@@ -585,6 +603,18 @@ export default {
 @media (max-width: 960px) {
   .woodcraft-menubar {
     padding: 0.65rem 1rem;
+  }
+  .woodcraft-menubar :deep(.p-menubar-start) {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: auto;
+    margin-inline-end: 0;
+    min-width: 0;
+  }
+
+  .nav-start {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .woodcraft-menubar :deep(.p-menubar-root-list) {
