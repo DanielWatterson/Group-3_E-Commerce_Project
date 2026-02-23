@@ -62,8 +62,7 @@ CREATE TABLE `order_items` (
   KEY `idx_order_items_order` (`order_id`),
   KEY `idx_order_items_product` (`product_id`),
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
-  CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_order_quantity_positive` CHECK ((`quantity` > 0))
+  CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -73,7 +72,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,2,2,'2026-02-20 11:32:53'),(2,2,3,1,'2026-02-20 11:32:53'),(3,3,1,3,'2026-02-20 11:32:53');
+INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-23 15:14:50'),(2,2,3,1,'2026-02-23 15:14:50'),(3,3,5,1,'2026-02-23 15:14:50');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -88,10 +87,14 @@ CREATE TABLE `orders` (
   `order_id` int NOT NULL AUTO_INCREMENT,
   `customer_id` int NOT NULL,
   `order_status` enum('pending','paid','shipped','completed','cancelled') DEFAULT 'pending',
+  `original_total` decimal(10,2) NOT NULL,
+  `final_total` decimal(10,2) NOT NULL,
+  `discount_percent` decimal(5,2) DEFAULT '0.00',
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
   `order_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`order_id`),
   KEY `idx_order_customer` (`customer_id`),
-  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE
+  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -101,7 +104,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,2,'pending','2026-02-20 11:32:53'),(2,3,'pending','2026-02-20 11:32:53'),(3,1,'pending','2026-02-20 11:32:53');
+INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,0.00,0.00,'2026-02-23 15:14:50'),(2,2,'pending',4999.99,4999.99,0.00,0.00,'2026-02-23 15:14:50'),(3,3,'paid',2999.99,2999.99,0.00,0.00,'2026-02-23 15:14:50');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -116,13 +119,12 @@ CREATE TABLE `payments` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `payment_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  `payment_status` enum('pending','completed','failed') DEFAULT 'pending',
   `payment_method` varchar(50) DEFAULT NULL,
+  `payment_status` enum('pending','completed','failed') DEFAULT 'pending',
+  `payment_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`payment_id`),
   KEY `idx_payments_order` (`order_id`),
-  CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
-  CONSTRAINT `chk_payment_amount_positive` CHECK ((`amount` > 0))
+  CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -132,7 +134,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,7999.98,'2026-02-20 11:32:53','completed','credit_card'),(2,2,4999.99,'2026-02-20 11:32:53','failed','paypal'),(3,3,8999.97,'2026-02-20 11:32:53','pending','bank_transfer');
+INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed','2026-02-23 15:14:50'),(2,2,4999.99,'paypal','pending','2026-02-23 15:14:50'),(3,3,2999.99,'credit_card','failed','2026-02-23 15:14:50');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -151,7 +153,8 @@ CREATE TABLE `products` (
   `image_url` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`product_id`),
   CONSTRAINT `chk_price_positive` CHECK ((`product_price` > 0)),
-  CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0))
+  CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0)),
+  CONSTRAINT `chk_stock_alert` CHECK ((`quantity` >= 0))
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -174,4 +177,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-20 11:36:52
+-- Dump completed on 2026-02-23 15:35:19

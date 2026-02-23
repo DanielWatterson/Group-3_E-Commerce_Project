@@ -3,6 +3,7 @@ import cors from "cors";
 import router from "./routes.js";
 import { getSingleCustomer } from "./models/usersDB.js";
 import { comparePassword, createToken } from "./middleware/auth.js";
+import AuditReport from './services/auditReport.js'; 
 
 const app = express();
 app.use(express.json());
@@ -35,6 +36,8 @@ app.post("/login", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
+app.use(AuditReport);
 app.use(router);
 
 app.listen(5050, () => {

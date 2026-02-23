@@ -20,7 +20,8 @@ CREATE TABLE `customer` (
   `image_url` VARCHAR(500),
   PRIMARY KEY (`product_id`),
   CONSTRAINT chk_price_positive CHECK (product_price > 0),
-  CONSTRAINT chk_quantity_nonnegative CHECK (quantity >= 0)
+  CONSTRAINT chk_quantity_nonnegative CHECK (quantity >= 0),
+  CONSTRAINT chk_stock_alert CHECK (quantity >= 0)
   );
   
 INSERT INTO `e_commerce`.`customer` (`customer_name`, `email`, `password`) 
@@ -53,51 +54,73 @@ VALUES ('Custom Desk - Premium', 7999.99, 10,'https://i.postimg.cc/cHycHwrx/cust
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
 VALUES ('Custom Desk - Luxury', 8999.99, 20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
 
-CREATE TABLE `orders` (
+CREATE TABLE orders (
   order_id INT AUTO_INCREMENT PRIMARY KEY,
   customer_id INT NOT NULL,
-  order_status ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled') 
-  DEFAULT 'pending',
+  order_status ENUM('pending','paid','shipped','completed','cancelled') DEFAULT 'pending',
+  original_total DECIMAL(10,2) NOT NULL,
+  final_total DECIMAL(10,2) NOT NULL,
+  discount_percent DECIMAL(5,2) DEFAULT 0,
+  discount_amount DECIMAL(10,2) DEFAULT 0,
   order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
-  ON DELETE CASCADE  -- If customer deleted, delete their orders
 );
 
-CREATE TABLE `order_items` (
+INSERT INTO orders (customer_id, original_total, final_total, order_status) VALUES
+(1, 7999.98, 5199.99, 'paid'),
+(2, 4999.99, 4999.99, 'pending'),
+(3, 2999.99, 2999.99, 'paid'); 
+
+CREATE TABLE order_items (
   order_item_id INT AUTO_INCREMENT PRIMARY KEY,
   order_id INT NOT NULL,
   product_id INT NOT NULL,
   quantity INT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT,
-  CONSTRAINT chk_order_quantity_positive CHECK (quantity > 0)
+  FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
-INSERT INTO `e_commerce`.`orders` (`customer_id`) VALUES (2);
-INSERT INTO `e_commerce`.`orders` (`customer_id`) VALUES (3);
-INSERT INTO `e_commerce`.`orders` (`customer_id`) VALUES (1);
+INSERT INTO order_items (order_id, product_id, quantity) VALUES
+(1, 1, 2),
+(2, 3, 1),
+(3, 5, 1);
 
-INSERT INTO `e_commerce`.`order_items` (`order_id`, `product_id`, `quantity`) VALUES (1, 2, 2);
-INSERT INTO `e_commerce`.`order_items` (`order_id`, `product_id`, `quantity`) VALUES (2, 3, 1);
-INSERT INTO `e_commerce`.`order_items` (`order_id`, `product_id`, `quantity`) VALUES (3, 1, 3);
-
-CREATE TABLE `payments` (
+CREATE TABLE payments (
   payment_id INT AUTO_INCREMENT PRIMARY KEY,
   order_id INT NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
-  payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-  payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
   payment_method VARCHAR(50),
-  FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-  CONSTRAINT chk_payment_amount_positive CHECK (amount > 0)
-  );
-  
-INSERT INTO payments (order_id, amount, payment_status, payment_method) 
-VALUES 
-(1, 7999.98, 'completed', 'credit_card'),
-(2, 4999.99, 'failed', 'paypal'),
-(3, 8999.97, 'pending', 'bank_transfer');
+  payment_status ENUM('pending','completed','failed') DEFAULT 'pending',
+  payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(order_id)
+);
+
+INSERT INTO payments (order_id, amount, payment_method, payment_status) VALUES
+(1, 5199.99, 'payfast', 'completed'),
+(2, 4999.99, 'paypal', 'pending'),
+(3, 2999.99, 'credit_card', 'failed'); 
+
+CREATE OR REPLACE VIEW order_audit AS
+SELECT 
+  o.order_id,
+  c.customer_name,
+  c.email,
+  o.original_total,
+  o.discount_percent,
+  o.discount_amount,
+  o.final_total,
+  o.order_status,
+  o.order_date,
+  COUNT(oi.order_item_id) as items_count,
+  GROUP_CONCAT(p.product_name SEPARATOR ', ') as products
+FROM orders o
+JOIN customer c ON o.customer_id = c.customer_id
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+LEFT JOIN products p ON oi.product_id = p.product_id
+GROUP BY o.order_id;
+
+SELECT * FROM order_audit WHERE discount_amount > 0;
 
 CREATE INDEX idx_order_customer ON orders(customer_id);
 CREATE INDEX idx_order_items_order ON order_items(order_id);
