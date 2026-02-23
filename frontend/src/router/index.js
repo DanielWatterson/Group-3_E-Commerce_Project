@@ -10,6 +10,8 @@ import CustomBuilderView from '@/views/CustomBuilderView.vue'
 import VirtualShowroomsView from '@/views/VirtualShowroomsView.vue'
 import B2BView from '@/views/B2BView.vue'
 import store from '@/stores'
+import PaymentSuccess from '@/views/PaymentSuccess.vue'
+import PaymentCancel from '@/views/PaymentCancel.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -80,6 +82,18 @@ const router = createRouter({
       path: '/b2b',
       name: 'b2b',
       component: B2BView,
+      meta: { transition: 'page-fade' }
+    },
+    {
+      path: '/payment/success',
+      name: 'paymentSuccess',
+      component: PaymentSuccess,
+      meta: { transition: 'page-fade' }
+    },
+    {
+      path: '/payment/cancel',
+      name: 'paymentCancel',
+      component: PaymentCancel,
       meta: { transition: 'page-fade' }
     }
   ],
