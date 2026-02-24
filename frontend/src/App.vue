@@ -1,323 +1,681 @@
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import Menubar from 'primevue/menubar'
-import Button from 'primevue/button'
-import Toast from 'primevue/toast'
-import Badge from 'primevue/badge'
-import { useToast } from 'primevue/usetoast'
+<script>
+import Menubar from "primevue/menubar";
+import Button from "primevue/button";
+import Badge from "primevue/badge";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
 
-const route = useRoute()
-const router = useRouter()
-const toast = useToast()
-
-const isScrolled = ref(false)
-const isAuthenticated = ref(false)
-const cartCount = ref(0)
-
-// Simplified navigation items - only Products and Services
-const items = ref([
-  {
-    label: 'Home',
-    icon: 'pi pi-home',
-    command: () => router.push('/')
+export default {
+  name: "App",
+  components: {
+    Menubar,
+    Button,
+    Badge,
+    Drawer,
+    InputText,
   },
-  {
-    label: 'Products',
-    icon: 'pi pi-shopping-bag',
-    command: () => router.push('/products')
+  data() {
+    return {
+      isScrolled: false,
+      isNavbarHovered: false,
+      isMobileSidebarVisible: false,
+      mobileSearchQuery: "",
+      menuItems: [
+        {
+          label: "Home",
+          icon: "pi pi-home",
+          path: "/",
+        },
+        {
+          label: "Shop",
+          icon: "pi pi-shopping-bag",
+          path: "/products",
+        },
+        {
+          label: "Custom Builder",
+          icon: "pi pi-pencil",
+          path: "/custom-builder",
+        },
+        {
+          label: "Virtual Showrooms",
+          icon: "pi pi-desktop",
+          path: "/virtual-showrooms",
+        },
+        {
+          label: "B2B",
+          icon: "pi pi-briefcase",
+          path: "/b2b",
+        },
+      ],
+    };
   },
-  {
-    label: 'Services',
-    icon: 'pi pi-cog',
-    command: () => router.push('/services')
-  }
-])
-
-// Check if current page should hide header
-const hideHeader = computed(() => {
-  return ['/login', '/intro'].includes(route.path)
-})
-
-// Check if on home page for transparent header
-const isHomePage = computed(() => route.path === '/')
-
-// Header class based on scroll and page
-const headerClass = computed(() => ({
-  'scrolled': isScrolled.value,
-  'home-page': isHomePage.value && !isScrolled.value,
-  'solid': !isHomePage.value || isScrolled.value
-}))
-
-// Handle scroll
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50
-}
-
-// Check authentication and cart
-const checkAuth = () => {
-  const loggedIn = localStorage.getItem('loggedIn') === 'true'
-  isAuthenticated.value = loggedIn
-}
-
-// Get cart count from store
-const updateCartCount = () => {
-  if (window.__VUE_APP_STORE__) {
-    cartCount.value = window.__VUE_APP_STORE__.getters?.cartCount || 0
-  }
-}
-
-// Navigation methods
-const goToLogin = () => router.push('/login')
-const goToCart = () => router.push('/cart')
-const logout = () => {
-  if (window.__VUE_APP_STORE__) {
-    window.__VUE_APP_STORE__.dispatch('logout')
-  }
-  toast.add({
-    severity: 'success',
-    summary: 'Logged Out',
-    detail: 'You have been successfully logged out',
-    life: 3000
-  })
-  router.push('/')
-}
-
-// Lifecycle
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-  checkAuth()
-  updateCartCount()
-  
-  // Store reference for cart updates
-  window.__VUE_APP_STORE__ = window.__VUE_APP_STORE__ || {}
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  computed: {
+    isHomeRoute() {
+      return this.$route.path === "/";
+    },
+    isNavbarOpaque() {
+      return !this.isHomeRoute || this.isScrolled || this.isNavbarHovered;
+    },
+    navbarClasses() {
+      return {
+        "is-opaque": this.isNavbarOpaque,
+        "is-transparent": !this.isNavbarOpaque,
+      };
+    },
+    pageContentClasses() {
+      return {
+        "home-overlay": this.isHomeRoute,
+      };
+    },
+    cartCount() {
+      return this.$store.getters.cartCount || 0;
+    },
+  },
+  mounted() {
+    window.addEventListener("scroll", this.handleScroll, { passive: true });
+    this.handleScroll();
+  },
+  beforeUnmount() {
+    window.removeEventListener("scroll", this.handleScroll);
+  },
+  watch: {
+    "$route.path"() {
+      this.isNavbarHovered = false;
+      this.isMobileSidebarVisible = false;
+      this.$nextTick(() => this.handleScroll());
+    },
+  },
+  methods: {
+    handleScroll() {
+      this.isScrolled = window.scrollY > 10;
+    },
+    openMobileSidebar() {
+      this.isMobileSidebarVisible = true;
+    },
+    closeMobileSidebar() {
+      this.isMobileSidebarVisible = false;
+    },
+    handleMobileItemClick(path) {
+      this.navigateTo(path);
+    },
+    navigateTo(path) {
+      if (this.$route.path !== path) {
+        this.$router.push(path);
+      }
+      this.closeMobileSidebar();
+    },
+    isActiveRoute(path) {
+      return this.$route.path === path;
+    },
+  },
+};
 </script>
 
 <template>
-  <div class="app-container">
-    <Toast />
-    
-    <!-- Only show header if not on login/intro page -->
-    <header v-if="!hideHeader" :class="headerClass">
-      <Menubar :model="items" class="custom-menubar">
-        <template #start>
-          <div class="logo" @click="router.push('/')">
-            <span class="logo-text">LumberLink</span>
-            <span class="logo-desktop">Desks</span>
-          </div>
-        </template>
-        
-        <template #item="{ item, props, hasSubmenu }">
-          <a v-bind="props.action" @click="item.command" class="menu-item">
-            <span :class="item.icon" />
-            <span class="ml-2">{{ item.label }}</span>
-            <span v-if="hasSubmenu" class="pi pi-fw pi-angle-down ml-2" />
-          </a>
-        </template>
-        
-        <template #end>
-          <div class="auth-section">
-            <Button 
-              icon="pi pi-search" 
-              class="p-button-rounded p-button-text header-btn" 
-              @click="router.push('/products')"
-              v-tooltip="'Search Products'"
-            />
-            
-            <template v-if="!isAuthenticated">
-              <Button 
-                icon="pi pi-user" 
-                class="p-button-rounded p-button-text header-btn" 
-                @click="goToLogin"
-                v-tooltip="'Login'"
-              />
-            </template>
-            <template v-else>
-              <Button 
-                icon="pi pi-sign-out" 
-                class="p-button-rounded p-button-text header-btn" 
-                @click="logout"
-                v-tooltip="'Logout'"
-              />
-            </template>
-            
-            <Button 
-              icon="pi pi-shopping-cart" 
-              class="p-button-rounded p-button-text header-btn cart-btn" 
-              @click="goToCart"
-              v-tooltip="'View Cart'"
+  <div class="app-shell">
+    <header
+      class="top-nav"
+      :class="navbarClasses"
+      @mouseenter="isNavbarHovered = true"
+      @mouseleave="isNavbarHovered = false"
+    >
+      <nav class="woodcraft-menubar">
+        <div class="nav-start">
+          <Button
+            icon="pi pi-bars"
+            text
+            rounded
+            class="mobile-menu-btn"
+            aria-label="Open navigation menu"
+            @click="openMobileSidebar"
+          />
+          <button type="button" class="brand" @click="navigateTo('/')">
+            <span class="brand-mark">WC</span>
+            <span class="brand-text">WoodCraft Workshop</span>
+          </button>
+        </div>
+
+        <ul class="nav-menu-list">
+          <li
+            v-for="item in menuItems"
+            :key="item.path"
+            class="nav-menu-item"
+          >
+            <button
+              type="button"
+              class="menu-link"
+              :class="{ 'is-active': isActiveRoute(item.path) }"
+              @click="navigateTo(item.path)"
             >
-              <Badge v-if="cartCount > 0" :value="cartCount" severity="danger" class="cart-badge" />
-            </Button>
+              <i :class="item.icon" class="menu-icon"></i>
+              <span>{{ item.label }}</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="nav-actions">
+          <Button
+            icon="pi pi-search"
+            rounded
+            text
+            class="icon-btn"
+            aria-label="Search"
+            @click="navigateTo('/products')"
+          />
+          <Button
+            icon="pi pi-user"
+            rounded
+            text
+            class="icon-btn"
+            aria-label="User account"
+            @click="navigateTo('/login')"
+          />
+          <div class="desktop-cart-wrap">
+            <Button
+              icon="pi pi-shopping-cart"
+              rounded
+              text
+              class="icon-btn cart-btn"
+              aria-label="Shopping cart"
+              @click="navigateTo('/cart')"
+            />
+            <Badge
+              v-if="cartCount > 0"
+              :value="cartCount"
+              severity="contrast"
+              class="cart-badge"
+            />
           </div>
-        </template>
-      </Menubar>
+        </div>
+      </nav>
     </header>
 
-    <main class="main-content">
-      <router-view />
+    <Drawer
+      v-model:visible="isMobileSidebarVisible"
+      position="left"
+      class="mobile-sidebar"
+      :showCloseIcon="false"
+      :dismissable="true"
+      :modal="true"
+      :baseZIndex="1600"
+      :autoZIndex="true"
+    >
+      <div class="mobile-sidebar-content">
+        <div class="mobile-sidebar-header">
+          <span class="mobile-sidebar-title">WoodCraft Workshop</span>
+          <Button
+            icon="pi pi-times"
+            text
+            rounded
+            class="mobile-close-btn"
+            aria-label="Close navigation menu"
+            @click="closeMobileSidebar"
+          />
+        </div>
+
+        <div class="mobile-search-wrap">
+          <i class="pi pi-search"></i>
+          <InputText
+            v-model="mobileSearchQuery"
+            placeholder="Search"
+            class="mobile-search-input"
+            aria-label="Search products"
+          />
+        </div>
+
+        <nav class="mobile-nav-links" aria-label="Mobile navigation">
+          <button
+            v-for="item in menuItems"
+            :key="item.path"
+            type="button"
+            class="mobile-nav-link"
+            :class="{ 'is-active': isActiveRoute(item.path) }"
+            @click="handleMobileItemClick(item.path)"
+          >
+            <i :class="item.icon"></i>
+            <span>{{ item.label }}</span>
+          </button>
+        </nav>
+
+        <div class="mobile-sidebar-footer">
+          <Button
+            icon="pi pi-user"
+            label="Account"
+            outlined
+            class="mobile-footer-btn"
+            @click="navigateTo('/login')"
+          />
+          <div class="mobile-cart-wrap">
+            <Button
+              icon="pi pi-shopping-cart"
+              label="Cart"
+              outlined
+              class="mobile-footer-btn mobile-footer-cart"
+              @click="navigateTo('/cart')"
+            />
+            <Badge
+              v-if="cartCount > 0"
+              :value="cartCount"
+              severity="contrast"
+              class="mobile-cart-badge"
+            />
+          </div>
+        </div>
+      </div>
+    </Drawer>
+
+    <main class="page-content" :class="pageContentClasses">
+      <router-view v-slot="{ Component, route }">
+        <Transition :name="route.meta.transition || 'page-fade'" mode="out-in">
+          <component :is="Component" :key="route.fullPath" />
+        </Transition>
+      </router-view>
     </main>
   </div>
 </template>
 
 <style scoped>
-.app-container {
+.app-shell {
   min-height: 100vh;
-  background: #f0f2f5;
+  background: #f4f1ec;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
-header {
+.top-nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  inset: 0 0 auto 0;
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
 }
 
-.custom-menubar {
+.woodcraft-menubar {
+  border: 0;
   border-radius: 0;
-  padding: 0.75rem 2rem;
-  transition: all 0.3s ease;
-  border: none;
-  border-bottom: 2px solid transparent;
+  padding: 0.78rem 2rem;
+  background: rgba(255, 255, 255, 0);
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
-/* Home page header - transparent with border */
-header.home-page .custom-menubar {
+.top-nav.is-transparent .woodcraft-menubar {
   background: transparent;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
 }
 
-header.home-page .custom-menubar :deep(.p-menubar-root-list > .p-menuitem > .p-menuitem-link) {
-  color: white;
-  font-weight: 500;
+.top-nav.is-opaque .woodcraft-menubar {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom-color: rgba(99, 73, 44, 0.18);
+  box-shadow: 0 6px 20px rgba(22, 17, 12, 0.1);
+  backdrop-filter: blur(6px);
 }
 
-header.home-page .custom-menubar :deep(.p-menubar-root-list > .p-menuitem > .p-menuitem-link:hover) {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-}
-
-header.home-page .header-btn {
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  margin-left: 0.25rem;
-}
-
-header.home-page .header-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: white;
-}
-
-header.home-page .logo-text,
-header.home-page .logo-desktop {
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Solid header for other pages and scrolled */
-header.solid .custom-menubar {
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-bottom: 2px solid #8B4513;
-}
-
-header.solid .custom-menubar :deep(.p-menubar-root-list > .p-menuitem > .p-menuitem-link) {
-  color: #2d3748;
-  font-weight: 500;
-}
-
-header.solid .custom-menubar :deep(.p-menubar-root-list > .p-menuitem > .p-menuitem-link:hover) {
-  background: #f7fafc;
-  border-radius: 6px;
-  color: #8B4513;
-}
-
-header.solid .header-btn {
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  margin-left: 0.25rem;
-}
-
-header.solid .header-btn:hover {
-  background: #f7fafc;
-  border-color: #8B4513;
-  color: #8B4513;
-}
-
-header.solid .logo-text {
-  color: #8B4513;
-}
-
-header.solid .logo-desktop {
-  color: #4a5568;
-}
-
-/* Scrolled state - adds shadow */
-header.scrolled .custom-menubar {
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
-}
-
-.logo {
-  display: flex;
+.brand {
+  display: inline-flex;
   align-items: center;
+  gap: 0.7rem;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 1.25rem;
+  padding: 0;
 }
 
-.logo-text {
-  margin-right: 4px;
-}
-
-.auth-section {
+.nav-start {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
+  gap: 0.35rem;
 }
 
-.header-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  transition: all 0.2s ease;
+.mobile-menu-btn {
+  display: none;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.brand-mark {
+  width: 2.05rem;
+  height: 2.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #7c542f, #b07d48);
+  color: #f8f3eb;
+}
+
+.brand-text {
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.top-nav.is-transparent .brand-text,
+.top-nav.is-transparent .menu-link,
+.top-nav.is-transparent .icon-btn,
+.top-nav.is-transparent .mobile-menu-btn {
+  color: #f8f3eb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.top-nav.is-opaque .brand-text,
+.top-nav.is-opaque .menu-link,
+.top-nav.is-opaque .icon-btn,
+.top-nav.is-opaque .mobile-menu-btn {
+  color: #3f3023;
+  text-shadow: none;
+}
+
+.nav-menu-list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.nav-menu-item {
+  display: flex;
+}
+
+.menu-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.52rem 0.72rem;
+  text-decoration: none;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  color: inherit;
+}
+
+.menu-link:focus {
+  outline: none;
+  background: transparent;
+}
+
+.menu-link:active {
+  background: transparent;
+}
+
+.top-nav.is-transparent .menu-link:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.top-nav.is-opaque .menu-link:hover {
+  background: rgba(99, 73, 44, 0.11);
+  color: #2a2119;
+}
+
+.menu-link.is-active {
+  font-weight: 600;
+}
+
+.top-nav.is-transparent .menu-link.is-active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.top-nav.is-opaque .menu-link.is-active {
+  background: rgba(99, 73, 44, 0.15);
+}
+
+.menu-icon {
+  font-size: 0.95rem;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.top-nav.is-transparent .icon-btn.p-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.top-nav.is-opaque .icon-btn.p-button:hover {
+  background: rgba(99, 73, 44, 0.1);
 }
 
 .cart-btn {
   position: relative;
 }
 
+.desktop-cart-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .cart-badge {
   position: absolute;
-  top: -0.25rem;
-  right: -0.25rem;
-  font-size: 0.7rem;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  line-height: 1.25rem;
+  top: 0;
+  right: 0;
+  transform: translate(45%, -45%);
+  min-width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  font-size: 0.62rem;
+  z-index: 2;
 }
 
-.main-content {
-  padding-top: 70px;
-  min-height: calc(100vh - 70px);
+.page-content {
+  min-height: 100vh;
+  padding-top: 72px;
 }
 
-@media (max-width: 768px) {
-  .custom-menubar {
-    padding: 0.5rem 1rem;
+.page-content.home-overlay {
+  padding-top: 0;
+}
+
+.mobile-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.mobile-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.mobile-sidebar-title {
+  font-size: 1rem;
+  font-weight: 650;
+  color: #101010;
+}
+
+.mobile-search-wrap {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.mobile-search-wrap .pi-search {
+  position: absolute;
+  left: 0.72rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #767676;
+  font-size: 0.9rem;
+  z-index: 1;
+}
+
+.mobile-search-input {
+  width: 100%;
+}
+
+.mobile-search-input :deep(.p-inputtext) {
+  width: 100%;
+  padding-left: 2.1rem;
+  border-color: #d6d6d6;
+  color: #111;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mobile-nav-link {
+  border: 0;
+  background: transparent;
+  color: #111;
+  border-radius: 8px;
+  padding: 0.7rem 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-nav-link:hover {
+  background: #f5f5f5;
+}
+
+.mobile-nav-link.is-active {
+  background: #ececec;
+  font-weight: 600;
+}
+
+.mobile-nav-link i {
+  font-size: 0.95rem;
+}
+
+.mobile-sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #ececec;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  align-items: stretch;
+  overflow: visible;
+}
+
+.mobile-footer-btn {
+  justify-content: center;
+  border-color: #d8d8d8;
+  color: #141414;
+  width: 100%;
+}
+
+.mobile-cart-wrap {
+  position: relative;
+  display: flex;
+  overflow: visible;
+}
+
+.mobile-cart-badge {
+  position: absolute;
+  top: -0.2rem;
+  right: 0.1rem;
+  transform: none;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.22rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: #1c1c1c;
+  color: #ffffff;
+  z-index: 5;
+  pointer-events: none;
+}
+
+@media (max-width: 1160px) {
+  .woodcraft-menubar {
+    padding: 0.65rem 1rem;
   }
-  
-  .logo-desktop {
+
+  .brand-text {
     display: none;
   }
-  
-  .main-content {
-    padding-top: 60px;
+
+  .menu-link {
+    padding: 0.45rem 0.5rem;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  .menu-icon {
+    font-size: 0.85rem;
+  }
+
+  .icon-btn {
+    width: 2.05rem;
+    height: 2.05rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .woodcraft-menubar {
+    padding: 0.65rem 1rem;
+  }
+
+  .nav-start {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .nav-menu-list {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .nav-actions {
+    display: none;
+  }
+
+  .brand-text {
+    font-size: 0.88rem;
+    display: inline;
+  }
+
+  .page-content {
+    padding-top: 64px;
+  }
+
+  .page-content.home-overlay {
+    padding-top: 0;
   }
 }
 </style>

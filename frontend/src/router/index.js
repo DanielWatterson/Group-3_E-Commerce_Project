@@ -2,9 +2,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import LoginSignupView from '@/views/LoginSignupView.vue'
 import CustomersView from '@/views/CustomersView.vue'
-import ProductsView from '@/views/ProductsView.vue' // Add this import
-import CartView from '@/views/CartView.vue' // Add this import
+import ProductsView from '@/views/ProductsView.vue'
+import CartView from '@/views/CartView.vue'
+import GamingDeskSpecialsView from '@/views/GamingDeskSpecialsView.vue'
+import WorkDeskSpecialsView from '@/views/WorkDeskSpecialsView.vue'
+import CustomBuilderView from '@/views/CustomBuilderView.vue'
+import VirtualShowroomsView from '@/views/VirtualShowroomsView.vue'
+import B2BView from '@/views/B2BView.vue'
 import store from '@/stores'
+import PaymentSuccess from '@/views/PaymentSuccess.vue'
+import PaymentCancel from '@/views/PaymentCancel.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,42 +20,81 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { transition: 'page-fade' }
     },
     {
       path: '/login',
       name: 'login',
       component: LoginSignupView,
+      meta: { transition: 'page-fade' }
     },
     {
       path: '/customers',
       name: 'customers',
-      component: CustomersView,
-      meta: { requiresAuth: true }
+      component: CustomersView,      
+      meta: { requiresAuth: true, transition: 'page-fade' }
     },
     {
-      path: '/products', // Add products route
+      path: '/products',
       name: 'products',
       component: ProductsView,
+      meta: { transition: 'page-fade' }
     },
     {
-      path: '/cart', // Add cart route
+      path: '/shop',
+      redirect: '/products'
+    },
+    {
+      path: '/purchase',
+      redirect: '/products'
+    },
+    {
+      path: '/cart',
       name: 'cart',
       component: CartView,
+      meta: { transition: 'page-fade' }
     },
     {
-      path: '/custom-builder', // Add these placeholder routes
+      path: '/specials/gaming-pc-desks',
+      name: 'gamingSpecials',
+      component: GamingDeskSpecialsView,
+      meta: { transition: 'swipe-right' }
+    },
+    {
+      path: '/specials/work-desks',
+      name: 'workDeskSpecials',
+      component: WorkDeskSpecialsView,
+      meta: { transition: 'swipe-left' }
+    },
+    {
+      path: '/custom-builder',
       name: 'customBuilder',
-      component: { template: '<div>Custom Builder Page - Coming Soon</div>' }
+      component: CustomBuilderView,
+      meta: { transition: 'page-fade' }
     },
     {
-      path: '/virtual-showrooms',
+      path: '/virtual-showrooms',      
       name: 'virtualShowrooms',
-      component: { template: '<div>Virtual Showrooms Page - Coming Soon</div>' }
+      component: VirtualShowroomsView,
+      meta: { transition: 'page-fade' }
     },
     {
       path: '/b2b',
       name: 'b2b',
-      component: { template: '<div>B2B Page - Coming Soon</div>' }
+      component: B2BView,
+      meta: { transition: 'page-fade' }
+    },
+    {
+      path: '/payment/success',
+      name: 'paymentSuccess',
+      component: PaymentSuccess,
+      meta: { transition: 'page-fade' }
+    },
+    {
+      path: '/payment/cancel',
+      name: 'paymentCancel',
+      component: PaymentCancel,
+      meta: { transition: 'page-fade' }
     }
   ],
 })

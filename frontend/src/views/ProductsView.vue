@@ -82,9 +82,6 @@ export default {
       loading.value = true;
       try {
         await store.dispatch('getProducts');
-        if (products.value.length > 0) {
-          toast.add({ severity: 'success', summary: 'Success', detail: 'Products loaded successfully', life: 3000 });
-        }
       } catch (error) {
         console.error("Failed to load products:", error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products', life: 3000 });
@@ -199,9 +196,9 @@ export default {
     };
 
     const formatPrice = (price) => {
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-ZA', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'ZAR'
       }).format(price || 0);
     };
 

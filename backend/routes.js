@@ -14,6 +14,46 @@ import {
   deleteCustomer
 } from "./controllers/customerController.js";
 
+// Import usersCon with aliases to avoid conflicts
+import { 
+    getCustomersCon, 
+    postCustomerCon,
+    loginCon
+} from "./controllers/usersCon.js";
+
+import { 
+    getAllProducts, 
+    getProductById, 
+    createProduct, 
+    updateProduct, 
+    deleteProduct 
+} from "./controllers/productController.js";
+
+import { 
+    getAllOrders, 
+    getOrderById, 
+    createOrder, 
+    updateOrder, 
+    deleteOrder 
+} from "./controllers/orderController.js";
+
+import { 
+    getOrderItems, 
+    addOrderItems, 
+    updateOrderItemQuantity, 
+    deleteOrderItem 
+} from "./controllers/orderItemController.js";
+
+import { 
+    getAllPayments, 
+    getPaymentById, 
+    getPaymentsByOrderId, 
+    createPayment, 
+    updatePaymentStatus, 
+    deletePayment 
+} from "./controllers/paymentController.js";
+
+// CUSTOMER ROUTES
 router.get("/customer", getAllCustomers);
 router.get("/customer/id/:id", getCustomerById);
 router.get("/customer/email/:email", getCustomerByEmail);
@@ -31,6 +71,12 @@ import {
   deleteProduct
 } from "./controllers/productController.js";
 
+// USER ROUTES (from usersCon.js)
+router.get("/users-con", getCustomersCon);
+router.post("/users-con", postCustomerCon);
+router.post("/login", loginCon);
+
+// PRODUCT ROUTES
 router.get("/products", getAllProducts);
 router.get("/products/:id", getProductById);
 router.post("/products", createProduct);
