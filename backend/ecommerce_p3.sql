@@ -66,10 +66,10 @@ CREATE TABLE orders (
   FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
 
-INSERT INTO orders (customer_id, original_total, final_total, order_status) VALUES
-(1, 7999.98, 5199.99, 'paid'),
-(2, 4999.99, 4999.99, 'pending'),
-(3, 2999.99, 2999.99, 'paid'); 
+INSERT INTO orders (customer_id, original_total, final_total, discount_percent, discount_amount, order_status) VALUES
+(1, 7999.98, 5199.99, 35.00, 2800.00, 'paid'),      -- Over R5,000 = 35%
+(2, 4999.99, 3999.99, 20.00, 1000.00, 'pending'),   -- R4,000-R5,000 = 20%
+(3, 2999.99, 2549.99, 15.00, 450.00, 'paid'); 
 
 CREATE TABLE order_items (
   order_item_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,14 +92,17 @@ CREATE TABLE payments (
   amount DECIMAL(10,2) NOT NULL,
   payment_method VARCHAR(50),
   payment_status ENUM('pending','completed','failed') DEFAULT 'pending',
+  refund_id VARCHAR(100) NULL,
+  refund_amount DECIMAL(10,2) NULL,
+  refund_status ENUM('pending','completed','failed') NULL,
   payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
 
-INSERT INTO payments (order_id, amount, payment_method, payment_status) VALUES
-(1, 5199.99, 'payfast', 'completed'),
-(2, 4999.99, 'paypal', 'pending'),
-(3, 2999.99, 'credit_card', 'failed'); 
+INSERT INTO payments (order_id, amount, payment_method, payment_status, refund_id, refund_amount, refund_status) VALUES
+(1, 5199.99, 'payfast', 'completed', NULL, NULL, NULL),
+(2, 4999.99, 'paypal', 'pending', NULL, NULL, NULL),
+(3, 2999.99, 'credit_card', 'failed', 1, 2999.99, 'pending');
 
 CREATE OR REPLACE VIEW order_audit AS
 SELECT 
