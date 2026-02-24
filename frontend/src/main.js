@@ -31,7 +31,10 @@ app.use(router)
 app.use(PrimeVue, {
     ripple: true,
     theme: {
-        preset: Aura
+        preset: Aura,
+         options: {
+        darkModeSelector: false || 'none',
+    }
     }
 })
 app.use(ToastService) // Toast Service useable
