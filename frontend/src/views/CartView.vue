@@ -244,6 +244,7 @@ export default {
     };
 
     // Process payment with PayFast
+    // In CartView.vue - processPayment method
     const processPayment = async () => {
       if (!termsAccepted.value) {
         toast.add({
@@ -262,49 +263,26 @@ export default {
         // Calculate total with VAT
         const total = Number(cartTotal.value) * 1.15;
 
-        // CRITICAL: Format amount correctly - must have 2 decimal places with dot
-        const formattedAmount = total.toFixed(2);
-
-        // Create clean item name (no special characters)
-        const itemName =
-          cartItems.value.length === 1
-            ? cartItems.value[0].product_name
-            : `LumberLink Order (${cartCount.value} items)`;
-
-        // Create order object with clean data
+        // Clean and prepare order data
         const order = {
-          amount: formattedAmount,
-          item_name: itemName.replace(/[^\w\s]/gi, "").substring(0, 100), // Remove special chars
-          name_first: (customerInfo.value.firstName || "Customer").replace(
-            /[^\w\s]/gi,
-            "",
-          ),
-          name_last: (customerInfo.value.lastName || "").replace(
-            /[^\w\s]/gi,
-            "",
-          ),
-          email_address: (customerInfo.value.email || "customer@example.com")
-            .toLowerCase()
-            .trim(),
-        };
-
-        // Add optional fields only if they exist
-        if (customerInfo.value.phone) {
-          order.cell_number = customerInfo.value.phone.replace(/\D/g, ""); // Keep only digits
-        }
-
-        if (cartItems.value.length > 0) {
-          const description = cartItems.value
+          amount: total.toFixed(2),
+          item_name:
+            cartItems.value.length === 1
+              ? cartItems.value[0].product_name
+              : `LumberLink Order (${cartCount.value} items)`,
+          name_first: customerInfo.value.firstName?.trim() || "Customer",
+          name_last: customerInfo.value.lastName?.trim() || "",
+          email_address: customerInfo.value.email?.toLowerCase().trim() || "",
+          cell_number: customerInfo.value.phone?.replace(/\D/g, "") || "",
+          item_description: cartItems.value
             .map((i) => `${i.product_name} x${i.cart_quantity}`)
             .join(", ")
-            .replace(/[^\w\s,]/gi, "") // Remove special chars except commas and spaces
-            .substring(0, 255);
-          order.item_description = description;
-        }
+            .substring(0, 255),
+        };
 
-        console.log("Sending clean order to PayFast:", order);
+        console.log("Order data for PayFast:", order);
 
-        // Store order info
+        // Store pending order
         localStorage.setItem(
           "pendingOrder",
           JSON.stringify({
