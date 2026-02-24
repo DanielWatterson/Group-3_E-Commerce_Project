@@ -26,9 +26,9 @@ export default {
     
     const categories = ref([
       { name: 'All Products', value: null },
-      { name: 'Software', value: 'software' },
-      { name: 'AI Chatbot', value: 'ai chatbot' },
-      { name: 'Code', value: 'code' }
+      { name: 'Wooden Desks', value: 'Wooden' },
+      { name: 'Custom Desks', value: 'Custom' },
+
     ]);
 
     const sortOptions = ref([
@@ -36,7 +36,8 @@ export default {
       { name: 'Name (Z-A)', value: 'name_desc' },
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
-      { name: 'Stock (Low to High)', value: 'stock_asc' }
+      { name: 'Stock (Low to High)', value: 'stock_asc' },
+      { name: 'Stock (High to Low)', value: 'stock_desc' }
     ]);
     
     const selectedSort = ref('name_asc');
@@ -326,11 +327,18 @@ export default {
       <!-- Products Grid -->
       <div v-else class="products-grid">
         <div 
-          v-for="product in filteredProducts" 
-          :key="product.product_id" 
-          class="product-card"
-          :class="{ 'out-of-stock': product.quantity <= 0 }"
-        >
+  v-for="product in filteredProducts"
+  :key="product.product_id"
+  class="product-card"
+  :class="{ 'out-of-stock': product.quantity <= 0 }"
+>
+  <div class="product-image">
+    <img
+      :src="product.image_url"
+      :alt="product.product_name"
+      @error="handleImageError"
+    />
+  </div>
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
@@ -598,6 +606,24 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.product-image {
+  width: 100%;
+  height: 250px;              /* HARD LIMIT */
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* IMPORTANT */
 }
 
 .buy-btn {

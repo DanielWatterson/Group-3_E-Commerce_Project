@@ -1,5 +1,5 @@
 // services/discountService.js
-import pool from "../config/db.js";
+import { pool } from "../config/config.js";  
 
 class DiscountService {
     

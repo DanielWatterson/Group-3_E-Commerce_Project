@@ -14,13 +14,14 @@ import {
   deleteCustomer
 } from "./controllers/customerController.js";
 
-// Import usersCon with aliases to avoid conflicts
+// ---------------- USER ROUTES (from usersCon.js) ----------------
 import { 
     getCustomersCon, 
     postCustomerCon,
     loginCon
 } from "./controllers/usersCon.js";
 
+// ---------------- PRODUCT ROUTES ----------------
 import { 
     getAllProducts, 
     getProductById, 
@@ -28,60 +29,6 @@ import {
     updateProduct, 
     deleteProduct 
 } from "./controllers/productController.js";
-
-import { 
-    getAllOrders, 
-    getOrderById, 
-    createOrder, 
-    updateOrder, 
-    deleteOrder 
-} from "./controllers/orderController.js";
-
-import { 
-    getOrderItems, 
-    addOrderItems, 
-    updateOrderItemQuantity, 
-    deleteOrderItem 
-} from "./controllers/orderItemController.js";
-
-import { 
-    getAllPayments, 
-    getPaymentById, 
-    getPaymentsByOrderId, 
-    createPayment, 
-    updatePaymentStatus, 
-    deletePayment 
-} from "./controllers/paymentController.js";
-
-// CUSTOMER ROUTES
-router.get("/customer", getAllCustomers);
-router.get("/customer/id/:id", getCustomerById);
-router.get("/customer/email/:email", getCustomerByEmail);
-router.get("/customer/check-email", checkEmailExists);
-router.post("/customer", postCustomer);
-router.patch("/customer/:id", patchCustomer);
-router.delete("/customer/:id", deleteCustomer);
-
-// ---------------- PRODUCT ROUTES ----------------
-import {
-  getAllProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct
-} from "./controllers/productController.js";
-
-// USER ROUTES (from usersCon.js)
-router.get("/users-con", getCustomersCon);
-router.post("/users-con", postCustomerCon);
-router.post("/login", loginCon);
-
-// PRODUCT ROUTES
-router.get("/products", getAllProducts);
-router.get("/products/:id", getProductById);
-router.post("/products", createProduct);
-router.patch("/products/:id", updateProduct);
-router.delete("/products/:id", deleteProduct);
 
 // ---------------- ORDER ROUTES ----------------
 import {
@@ -93,14 +40,15 @@ import {
   previewDiscount
 } from "./controllers/orderController.js";
 
-router.get("/orders", getAllOrders);
-router.get("/orders/:id", getOrderById);
-router.post("/orders", createOrder);
-router.patch("/orders/:id", updateOrder);
-router.delete("/orders/:id", deleteOrder);
-router.post("/orders/preview-discount", previewDiscount);
+// ---------------- ORDER ITEM ROUTES ----------------
+import { 
+    getOrderItems, 
+    addOrderItems, 
+    updateOrderItemQuantity, 
+    deleteOrderItem 
+} from "./controllers/orderItemController.js";
 
-// ---------------- PAYMENTS ----------------
+// ---------------- PAYMENT ROUTES ----------------
 import {
   getAllPayments,
   getPaymentById,
@@ -110,9 +58,46 @@ import {
   processRefund,
   updateRefundStatus,
   deletePayment
-
 } from "./controllers/paymentController.js";
 
+// ================= ROUTE DEFINITIONS =================
+
+// ---------------- CUSTOMER ROUTES ----------------
+router.get("/customer", getAllCustomers);
+router.get("/customer/id/:id", getCustomerById);
+router.get("/customer/email/:email", getCustomerByEmail);
+router.get("/customer/check-email", checkEmailExists);
+router.post("/customer", postCustomer);
+router.patch("/customer/:id", patchCustomer);
+router.delete("/customer/:id", deleteCustomer);
+
+// ---------------- USER ROUTES ----------------
+router.get("/users-con", getCustomersCon);
+router.post("/users-con", postCustomerCon);
+router.post("/login", loginCon);
+
+// ---------------- PRODUCT ROUTES ----------------
+router.get("/products", getAllProducts);
+router.get("/products/:id", getProductById);
+router.post("/products", createProduct);
+router.patch("/products/:id", updateProduct);
+router.delete("/products/:id", deleteProduct);
+
+// ---------------- ORDER ROUTES ----------------
+router.get("/orders", getAllOrders);
+router.get("/orders/:id", getOrderById);
+router.post("/orders", createOrder);
+router.patch("/orders/:id", updateOrder);
+router.delete("/orders/:id", deleteOrder);
+router.post("/orders/preview-discount", previewDiscount);
+
+// ---------------- ORDER ITEM ROUTES ----------------
+router.get("/orders/:id/items", getOrderItems);
+router.post("/orders/:id/items", addOrderItems);
+router.patch("/orders/items/:orderItemId", updateOrderItemQuantity);
+router.delete("/orders/items/:orderItemId", deleteOrderItem);
+
+// ---------------- PAYMENT ROUTES ----------------
 router.get("/payments", getAllPayments);
 router.get("/payments/:id", getPaymentById);
 router.get("/payments/orders/:orderId", getPaymentsByOrderId);
@@ -124,17 +109,12 @@ router.delete("/payments/:id", deletePayment);
 
 // ================= REPORTING ROUTES =================
 
-// Discount usage report
 router.get("/reports/discount-usage", async (req, res) => {
   try {
     const { start, end } = req.query;
-
     if (!start || !end) {
-      return res.status(400).json({
-        error: "start and end dates are required (YYYY-MM-DD)"
-      });
+      return res.status(400).json({ error: "start and end dates are required (YYYY-MM-DD)" });
     }
-
     const report = await AuditReport.getDiscountUsageReport(start, end);
     res.json(report);
   } catch (err) {
@@ -143,7 +123,6 @@ router.get("/reports/discount-usage", async (req, res) => {
   }
 });
 
-// Customer discount analysis
 router.get("/reports/customer-analysis", async (req, res) => {
   try {
     const report = await AuditReport.getCustomerDiscountAnalysis();
@@ -154,7 +133,6 @@ router.get("/reports/customer-analysis", async (req, res) => {
   }
 });
 
-// Product discount impact
 router.get("/reports/product-impact", async (req, res) => {
   try {
     const report = await AuditReport.getProductDiscountImpact();
@@ -165,23 +143,17 @@ router.get("/reports/product-impact", async (req, res) => {
   }
 });
 
-// CSV export
 router.get("/reports/discount-usage/csv", async (req, res) => {
   try {
     const { start, end } = req.query;
-
     if (!start || !end) {
       return res.status(400).json({ error: "start and end dates required" });
     }
-
     const report = await AuditReport.getDiscountUsageReport(start, end);
-
     if (!report.daily_breakdown?.length) {
       return res.status(404).json({ message: "No data available" });
     }
-
     const csv = AuditReport.generateCSV(report.daily_breakdown);
-
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", "attachment; filename=discount-report.csv");
     res.send(csv);
