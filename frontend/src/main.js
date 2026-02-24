@@ -37,7 +37,6 @@ app.use(PrimeVue, {
 })
 app.use(ToastService)
 
-// Register all components
 app.component('Menubar', Menubar)
 app.component('Button', Button)
 app.component('Card', Card)

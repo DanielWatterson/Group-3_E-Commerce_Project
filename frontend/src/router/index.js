@@ -96,7 +96,6 @@ const router = createRouter({
       component: PaymentCancel,
       meta: { transition: 'page-fade' }
     },
-    // In router/index.js - add this route
     {
       path: '/payment/notify',
       name: 'paymentNotify',
