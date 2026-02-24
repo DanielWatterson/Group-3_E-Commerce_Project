@@ -4,27 +4,33 @@ import axios from "axios";
 const store = createStore({
   state: {
     customer: [],
-    products: [], // Add products state
-    cart: JSON.parse(localStorage.getItem("cart")) || [], // Add cart state
+    products: [],
+    // Load cart from localStorage or start empty
+    cart: JSON.parse(localStorage.getItem("cart")) || [],
     token: localStorage.getItem("token") || null,
   },
   mutations: {
     getCustomer(state, payload) {
       state.customer = payload;
     },
-    SET_PRODUCTS(state, payload) { // Add products mutation
+    SET_PRODUCTS(state, payload) {
       state.products = payload;
     },
-    ADD_TO_CART(state, product) { // Add cart mutations
+    ADD_TO_CART(state, product) {
+      // Check if product already in cart
       const existingItem = state.cart.find(item => item.product_id === product.product_id);
+      
       if (existingItem) {
+        // Increment quantity if exists
         existingItem.cart_quantity += 1;
       } else {
+        // Add new item with quantity 1
         state.cart.push({
           ...product,
           cart_quantity: 1
         });
       }
+      // Save to localStorage
       localStorage.setItem("cart", JSON.stringify(state.cart));
     },
     REMOVE_FROM_CART(state, productId) {
@@ -72,7 +78,6 @@ const store = createStore({
       }
     },
     
-    // Add product actions
     async getProducts({ commit }) {
       try {
         const res = await axios.get(`http://localhost:5050/products`);
@@ -87,7 +92,6 @@ const store = createStore({
     async createProduct({ commit }, payload) {
       try {
         const res = await axios.post(`http://localhost:5050/products`, payload);
-        // Refresh products after creation
         await this.dispatch('getProducts');
         alert("Product created successfully!");
         return res.data;
@@ -101,7 +105,6 @@ const store = createStore({
     async updateProduct({ commit }, { id, ...payload }) {
       try {
         const res = await axios.patch(`http://localhost:5050/products/${id}`, payload);
-        // Refresh products after update
         await this.dispatch('getProducts');
         alert("Product updated successfully!");
         return res.data;
@@ -115,7 +118,6 @@ const store = createStore({
     async deleteProduct({ commit }, id) {
       try {
         await axios.delete(`http://localhost:5050/products/${id}`);
-        // Refresh products after deletion
         await this.dispatch('getProducts');
         alert("Product deleted successfully!");
       } catch (error) {
@@ -145,7 +147,6 @@ const store = createStore({
     async login({ commit }, payload) {
       try {
         let { data } = await axios.post(`http://localhost:5050/login`, payload);
-        console.log({ data });
 
         if (!data?.token) {
           throw new Error(data?.message || "Login failed");
@@ -167,7 +168,7 @@ const store = createStore({
     },
     logout({ commit }) {
       commit("CLEAR_TOKEN");
-      commit("CLEAR_CART"); // Clear cart on logout
+      commit("CLEAR_CART");
       delete axios.defaults.headers.common["Authorization"];
       alert("Logged out successfully!");
     },
