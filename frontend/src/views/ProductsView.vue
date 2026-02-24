@@ -196,9 +196,9 @@ export default {
     };
 
     const formatPrice = (price) => {
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-ZA', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'ZAR'
       }).format(price || 0);
     };
 
