@@ -1,14 +1,17 @@
 import express from "express";
 import cors from "cors";
 import router from "./routes.js";
-
+import { getSingleCustomer } from "./models/usersDB.js";
+import { comparePassword, createToken } from "./middleware/auth.js"; 
+console.log("🔍 comparePassword imported:", comparePassword ? "✅ Yes" : "❌ No");
+console.log("🔍 createToken imported:", createToken ? "✅ Yes" : "❌ No");
 const app = express();
 
 app.use(express.json());              // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse form data
 app.use(cors());                      // Then CORS
 
-// ✅ Add this debug middleware to see all requests
+//debug middleware to see all requests
 app.use((req, res, next) => {
   console.log(`📨 ${req.method} ${req.url}`);
   console.log('Headers:', req.headers['content-type']);

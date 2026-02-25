@@ -36,7 +36,7 @@ VALUES ( 'Basic Wooden Desk', 2999.99 , 75,'https://i.postimg.cc/5t16MvWb/shoppi
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
 VALUES ( 'Standard Wooden Desk', 3999.99, 50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg');
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ( 'Premium Wooden Desk', 4999.99, 25,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg');
+VALUES ( 'Premium Wooden Desk', 4999.99, 0,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg');
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
 VALUES ( 'Deluxe Wooden Desk', 5999.99, 40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg');
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
@@ -50,7 +50,7 @@ VALUES ('Custom Desk - Pro', 5999.99, 20 ,'https://i.postimg.cc/cHycHwrx/custom-
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
 VALUES ('Custom Desk - Elite', 6999.99, 15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`)
-VALUES ('Custom Desk - Premium', 7999.99, 10,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
+VALUES ('Custom Desk - Premium', 7999.99, 5,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
 VALUES ('Custom Desk - Luxury', 8999.99, 20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
 
@@ -67,8 +67,8 @@ CREATE TABLE orders (
 );
 
 INSERT INTO orders (customer_id, original_total, final_total, discount_percent, discount_amount, order_status) VALUES
-(1, 7999.98, 5199.99, 35.00, 2800.00, 'paid'),      -- Over R5,000 = 35%
-(2, 4999.99, 3999.99, 20.00, 1000.00, 'pending'),   -- R4,000-R5,000 = 20%
+(1, 7999.98, 5199.99, 35.00, 2800.00, 'paid'),      
+(2, 4999.99, 3999.99, 20.00, 1000.00, 'pending'),   
 (3, 2999.99, 2549.99, 15.00, 450.00, 'paid'); 
 
 CREATE TABLE order_items (

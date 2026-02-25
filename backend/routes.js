@@ -27,6 +27,8 @@ import {
     getProductById, 
     createProduct, 
     updateProduct, 
+    decreaseStock,    
+    increaseStock,
     deleteProduct 
 } from "./controllers/productController.js";
 
@@ -81,6 +83,8 @@ router.get("/products", getAllProducts);
 router.get("/products/:id", getProductById);
 router.post("/products", createProduct);
 router.patch("/products/:id", updateProduct);
+router.patch("/products/:id/decrease-stock", decreaseStock);
+router.patch("/products/:id/increase-stock", increaseStock);
 router.delete("/products/:id", deleteProduct);
 
 // ---------------- ORDER ROUTES ----------------

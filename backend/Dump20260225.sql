@@ -32,7 +32,7 @@ CREATE TABLE `customer` (
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `email` (`email`),
   CONSTRAINT `chk_email_format` CHECK ((`email` like _utf8mb4'%@%.%'))
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'Marie','cutemarie@gmail.com','Im@tHeb3acH'),(2,'Ronald','shadowdweller123456789@gmail.com','@bys$SeAleD1'),(3,'Ian','ianskywalker22@gmail.com','@walker0fTh3$ky');
+INSERT INTO `customer` VALUES (1,'Marie','cutemarie@gmail.com','Im@tHeb3acH'),(2,'Ronald','shadowdweller123456789@gmail.com','@bys$SeAleD1'),(3,'Ian','ianskywalker22@gmail.com','@walker0fTh3$ky'),(4,'Jack Daniels','jackd@gmail.com','$2b$11$tG/cSjxMHL76ljryP7n1xupSQNOtXadE8Pd8weV6J0ZI7QAHf0dBq'),(5,'Sam Fish','Samfish@gmail.com','$2b$11$tRZXd0SHcVQA5DeXnBqwOObDljhlwe6jjChkPzRwS3AcDf.BxQkLu'),(6,'Daddy Lyon ','Harrow@gmail.com','$2b$11$Wgv5jUxnFHMoJoiGWTyj3OGge0BvCpdIKahkzFCPjvg7L.Nei2YSW'),(7,'Aoi Subarashi','promag@gmail.com','$2b$11$R7uRO.IUbacDyncDwzWEJeux5a9vUwYsTQcGtB3ws7VjCksRqwpm2'),(8,'amy-lee','amylee@gmail.com','$2b$11$MlX401fG5QWGYxEEiVXkzO6grtKqtWVXqVUyPrcI3z3aw0SWKnuAG'),(9,'obi-wan','mustafar@gmail.com','$2b$11$Qgj9cewpMnYAdMu7GNJToe9W8ga0KMntGKG5U4SBPeL9pgTYeUJXS'),(10,'Feeya','Lute@gmail.com','$2b$11$igkH2jnUV/qYLBY.aB1Q5eR3wsbpiX4iO2nDO.l6ZvCbFckUOLUY2');
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -220,4 +220,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-24 14:22:41
+-- Dump completed on 2026-02-25 11:21:13

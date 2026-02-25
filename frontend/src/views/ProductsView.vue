@@ -10,10 +10,23 @@ export default {
     const store = useStore();
     const router = useRouter();
     const toast = useToast();
-    
+
+    const handleImageError = (event) => {
+      event.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+    };
+
     const products = computed(() => store.state.products || []);
     const isAuthenticated = computed(() => store.getters.isAuthenticated);
     const cartCount = computed(() => store.getters.cartCount);
+    const backgroundStyle = computed(() => {
+  return {
+    backgroundImage: "url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    minHeight: '100vh'
+  };
+});
     
     const loading = ref(false);
     const searchQuery = ref('');
@@ -75,7 +88,7 @@ export default {
         }
       });
       
-      return filtered;
+      return filtered; 
     });
 
     // Load products
@@ -164,21 +177,61 @@ export default {
     };
 
     // Add to cart
-    const addToCart = (product) => {
-      if (!isAuthenticated.value) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
-        router.push('/login');
-        return;
-      }
-      
-      if (product.quantity <= 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
-        return;
-      }
-      
-      store.dispatch('addToCart', product);
-      toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
-    };
+const addToCart = async (product) => {
+  console.log('🔵 ADD TO CART CLICKED', product);
+  
+  if (!isAuthenticated.value) {
+    console.log('🔴 User not authenticated');
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
+    router.push('/login');
+    return;
+  }
+  
+  if (product.quantity <= 0) {
+    console.log('🔴 Product out of stock');
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
+    return;
+  }
+  
+  try {
+    console.log('🟡 Sending PATCH request to:', `http://localhost:5050/products/${product.product_id}/decrease-stock`);
+    console.log('🟡 Request body:', { quantity: 1 });
+    
+    const response = await axios.patch(`http://localhost:5050/products/${product.product_id}/decrease-stock`, {
+      quantity: 1
+    });
+    
+    console.log('🟢 PATCH response:', response.data);
+    
+    console.log('🟡 Dispatching to cart store');
+    store.dispatch('addToCart', product);
+    
+    // Update local product quantity
+    const productIndex = products.value.findIndex(p => p.product_id === product.product_id);
+    if (productIndex !== -1) {
+      const updatedProducts = [...products.value];
+      updatedProducts[productIndex] = {
+        ...updatedProducts[productIndex],
+        quantity: updatedProducts[productIndex].quantity - 1
+      };
+      store.state.products = updatedProducts;
+    }
+    
+    toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
+  } catch (error) {
+    console.error('🔴 ERROR in addToCart:', error);
+    console.log('🔴 Error response:', error.response?.data);
+    console.log('🔴 Error status:', error.response?.status);
+    console.log('🔴 Error headers:', error.response?.headers);
+    
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: error.response?.data?.error || error.message || 'Failed to add to cart', 
+      life: 3000 
+    });
+  }
+};
 
     // Utility functions
     const getStockStatus = (quantity) => {
@@ -230,14 +283,16 @@ export default {
       addToCart,
       getStockStatus,
       getStockSeverity,
-      formatPrice
-    };
+      formatPrice,
+      handleImageError,
+      backgroundStyle 
+};
   }
 };
 </script>
 
 <template>
-  <div class="products-view">
+  <div class="products-view" :style="backgroundStyle">
     <Toast />
     
     <!-- Page Header -->
@@ -251,7 +306,6 @@ export default {
       <div class="toolbar">
         <div class="toolbar-left">
           <span class="p-input-icon-left">
-            <i class="pi pi-search" />
             <InputText 
               v-model="searchQuery" 
               placeholder="Search products..." 
@@ -279,20 +333,14 @@ export default {
         </div>
         
         <div class="toolbar-right">
-          <Button 
-            v-if="isAuthenticated"
-            label="Add Product" 
-            icon="pi pi-plus" 
-            class="p-button-success"
-            @click="openNew"
-          />
+
           <Button 
             label="Cart" 
             icon="pi pi-shopping-cart" 
             class="p-button-outlined"
             @click="$router.push('/cart')"
           >
-            <Badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
+          <Badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
           </Button>
         </div>
       </div>
@@ -327,18 +375,19 @@ export default {
       <!-- Products Grid -->
       <div v-else class="products-grid">
         <div 
-  v-for="product in filteredProducts"
-  :key="product.product_id"
-  class="product-card"
-  :class="{ 'out-of-stock': product.quantity <= 0 }"
->
-  <div class="product-image">
-    <img
-      :src="product.image_url"
-      :alt="product.product_name"
-      @error="handleImageError"
-    />
-  </div>
+          v-for="product in filteredProducts"
+          :key="product.product_id"
+          class="product-card"
+          :class="{ 'out-of-stock': product.quantity <= 0 }"
+        >
+          <div class="product-image">
+            <img
+              :src="product.image_url"
+              :alt="product.product_name"
+              @error="handleImageError"
+            />
+          </div>
+          
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
@@ -367,19 +416,6 @@ export default {
               class="buy-btn"
               :class="{ 'p-button-outlined': product.quantity === 0 }"
             />
-            
-            <div v-if="isAuthenticated" class="admin-actions">
-              <Button 
-                icon="pi pi-pencil" 
-                class="p-button-rounded p-button-text p-button-info"
-                @click="editProduct(product)"
-              />
-              <Button 
-                icon="pi pi-trash" 
-                class="p-button-rounded p-button-text p-button-danger"
-                @click="confirmDelete(product)"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -405,7 +441,7 @@ export default {
       </div>
 
       <div class="field">
-        <label for="price">Price ($)</label>
+        <label for="price">Price (R)</label>
         <InputNumber 
           id="price" 
           v-model="product.product_price" 
@@ -454,31 +490,72 @@ export default {
 </template>
 
 <style scoped>
+
 .products-view {
+  position: relative;
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
+  min-height: 100vh;
+}
+
+.products-view {
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100%;
+  background-image: url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Add an overlay for darkness if needed */
+.products-view::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2); /* Subtle dark overlay */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.content-card {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);  /* Adds blur effect */
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .page-header {
   text-align: center;
   margin-bottom: 3rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-header h1 {
   font-size: 2.5rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #b9b6b2;
   margin-bottom: 0.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-header p {
-  color: #718096;
+  color: #ffffff;
   font-size: 1.1rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .content-card {
-  background: white;
+  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -502,6 +579,7 @@ export default {
 
 .search-input {
   width: 250px;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .category-dropdown, .sort-dropdown {
@@ -532,6 +610,7 @@ export default {
   border: 1px solid #e2e8f0;
   position: relative;
   overflow: hidden;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-card:hover {
@@ -542,6 +621,7 @@ export default {
 .product-card.out-of-stock {
   opacity: 0.7;
   background: #f7fafc;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-badge {
@@ -566,29 +646,34 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-name {
   margin: 0;
-  color: #2d3748;
+  color: #947234;
   font-size: 1.25rem;
   font-weight: 600;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-id {
-  color: #a0aec0;
+  color: #000000;
   font-size: 0.875rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-details {
   margin-bottom: 1.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-price {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: #a18848;
   margin-bottom: 0.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-stock {
@@ -598,7 +683,7 @@ export default {
 }
 
 .stock-count {
-  color: #718096;
+  color: #719673;
   font-size: 0.875rem;
 }
 
@@ -623,7 +708,7 @@ export default {
 .product-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;          /* IMPORTANT */
+  object-fit: cover;         /* IMPORTANT */
 }
 
 .buy-btn {
@@ -639,7 +724,7 @@ export default {
 .loading-state, .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #718096;
+  color: #71967b;
 }
 
 .loading-state i {
@@ -654,7 +739,7 @@ export default {
 }
 
 .empty-state h3 {
-  color: #2d3748;
+  color: #6b5f24;
   margin-bottom: 0.5rem;
 }
 
@@ -669,8 +754,9 @@ export default {
 .field label {
   display: block;
   margin-bottom: 0.5rem;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
   font-weight: 500;
-  color: #4a5568;
+  color: #7d4423;
 }
 
 .confirmation-content {
