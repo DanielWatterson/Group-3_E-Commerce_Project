@@ -457,7 +457,7 @@ ${selectedType.value === 'Statue' ? `- Base Height: ${dimensions.value.baseHeigh
 Created with WoodCraft Workshop Builder
   `.trim()
 
-  window.location.href = `mailto:owner@woodcraftworkshop.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  window.location.href = `mailto:dominicpeck03@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   
   emailSent.value = true
   setTimeout(() => emailSent.value = false, 3000)
