@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import Button from "primevue/button";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
 import Checkbox from "primevue/checkbox";
 import RadioButton from "primevue/radiobutton";
 import Toast from "primevue/toast";
@@ -402,7 +402,7 @@ export default {
                   </div>
                   <div class="info-field">
                     <label>Province *</label>
-                    <Dropdown v-model="customerInfo.province" :options="provinces" placeholder="Select Province" />
+                    <Select v-model="customerInfo.province" :options="provinces" placeholder="Select Province" />
                   </div>
                   <div class="info-field">
                     <label>Postal Code *</label>

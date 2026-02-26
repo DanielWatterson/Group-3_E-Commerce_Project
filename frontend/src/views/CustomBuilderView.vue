@@ -27,7 +27,7 @@
           </button>
         </div>
 
-        <TresCanvas clear-color="#1a1a1a" shadows>
+        <TresCanvas clear-color="#1a1a1a" shadows :shadow-map-type="PCFShadowMap">
           <!-- Camera positioned for optimal viewing -->
           <TresPerspectiveCamera :position="cameraPosition" :look-at="[0, 1, 0]" />
           
@@ -286,6 +286,7 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
+import { PCFShadowMap } from 'three'
 
 // Import all model components
 import DeskModel from '@/components/models/DeskModel.vue'
