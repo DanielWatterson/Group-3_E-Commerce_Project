@@ -1,7 +1,8 @@
-import md5 from "md5";
+import axios from "axios";
 
 class PayFastService {
   constructor() {
+<<<<<<< HEAD
     this.merchant_id = '10046111';
     this.merchant_key = '46x04yxzlj934';
     this.passphrase = 'payfaster2026'; // MUST match sandbox exactly
@@ -85,14 +86,45 @@ class PayFastService {
     Object.keys(paymentData).sort().forEach(key => {
       const input = document.createElement('input');
       input.type = 'hidden';
+=======
+    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
+  }
+
+  async createPaymentSession(checkoutData) {
+    const { data } = await axios.post(`${this.apiBaseUrl}/payfast/create-payment`, checkoutData);
+    return data;
+  }
+
+  submitToPayFast(payfastUrl, paymentData) {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = payfastUrl;
+    form.target = "_self";
+
+    Object.keys(paymentData).forEach((key) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+>>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
       input.name = key;
       input.value = paymentData[key];
       form.appendChild(input);
     });
 
     document.body.appendChild(form);
+<<<<<<< HEAD
     console.log('Submitting to PayFast:', paymentData);
     form.submit();
+=======
+    form.submit();
+  }
+
+  redirectToPayFast(session) {
+    if (!session?.payfast_redirect_url) {
+      throw new Error("PayFast hosted URL is missing from backend response");
+    }
+
+    window.location.assign(session.payfast_redirect_url);
+>>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
   }
 }
 

@@ -206,6 +206,10 @@ export default {
       showConfirmDialog.value = true;
     };
 
+<<<<<<< HEAD
+=======
+    // Process payment with PayFast
+>>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
     const processPayment = async () => {
       if (!termsAccepted.value) {
         toast.add({
@@ -221,6 +225,7 @@ export default {
       showConfirmDialog.value = false;
 
       try {
+<<<<<<< HEAD
         const total = Number(cartTotal.value) * 1.15;
 
         const order = {
@@ -238,6 +243,36 @@ export default {
           items: cartItems.value,
           shipping: customerInfo.value
         }));
+=======
+        const checkoutPayload = {
+          customer: {
+            firstName: customerInfo.value.firstName?.trim() || "",
+            lastName: customerInfo.value.lastName?.trim() || "",
+            email: customerInfo.value.email?.toLowerCase().trim() || "",
+            phone: customerInfo.value.phone?.trim() || "",
+          },
+          items: cartItems.value.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.cart_quantity,
+          })),
+          item_name:
+            cartItems.value.length === 1
+              ? cartItems.value[0].product_name
+              : `LumberLink Order (${cartCount.value} items)`,
+        };
+
+        const paymentSession = await payfastService.createPaymentSession(checkoutPayload);
+
+        localStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            payment_id: paymentSession.payment_id,
+            order_id: paymentSession.order_id,
+            items: cartItems.value,
+            shipping: customerInfo.value,
+          }),
+        );
+>>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
 
         toast.add({
           severity: "info",
@@ -247,14 +282,14 @@ export default {
         });
 
         setTimeout(() => {
-          payfastService.redirectToPayFast(order);
-        }, 1500);
+          payfastService.redirectToPayFast(paymentSession);
+        }, 1200);
       } catch (error) {
-        console.error("Payment error:", error);
+        console.error("Payment error:", error?.response?.data || error);
         toast.add({
           severity: "error",
           summary: "Payment Failed",
-          detail: error.message || "Please try again",
+          detail: error?.response?.data?.error || error.message || "Please try again",
           life: 5000,
         });
         processingPayment.value = false;
@@ -839,4 +874,9 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+<<<<<<< HEAD
 </style>
+=======
+</style>
+
+>>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b

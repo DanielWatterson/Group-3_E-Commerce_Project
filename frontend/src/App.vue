@@ -20,38 +20,36 @@ export default {
       isNavbarHovered: false,
       isMobileSidebarVisible: false,
       mobileSearchQuery: "",
-    };
-  },
-  computed: {
-    menuItems() {
-      return [
+      menuItems: [
         {
           label: "Home",
           icon: "pi pi-home",
-          command: () => this.navigateTo("/"),
+          path: "/",
         },
         {
           label: "Shop",
           icon: "pi pi-shopping-bag",
-          command: () => this.navigateTo("/products"),
+          path: "/products",
         },
         {
           label: "Custom Builder",
           icon: "pi pi-pencil",
-          command: () => this.navigateTo("/custom-builder"),
+          path: "/custom-builder",
         },
         {
           label: "Virtual Showrooms",
           icon: "pi pi-desktop",
-          command: () => this.navigateTo("/virtual-showrooms"),
+          path: "/virtual-showrooms",
         },
         {
           label: "B2B",
           icon: "pi pi-briefcase",
-          command: () => this.navigateTo("/b2b"),
+          path: "/b2b",
         },
-      ];
-    },
+      ],
+    };
+  },
+  computed: {
     isHomeRoute() {
       return this.$route.path === "/";
     },
@@ -97,15 +95,17 @@ export default {
     closeMobileSidebar() {
       this.isMobileSidebarVisible = false;
     },
-    handleMobileItemClick(item) {
-      item.command();
-      this.closeMobileSidebar();
+    handleMobileItemClick(path) {
+      this.navigateTo(path);
     },
     navigateTo(path) {
       if (this.$route.path !== path) {
         this.$router.push(path);
       }
       this.closeMobileSidebar();
+    },
+    isActiveRoute(path) {
+      return this.$route.path === path;
     },
   },
 };
@@ -119,72 +119,75 @@ export default {
       @mouseenter="isNavbarHovered = true"
       @mouseleave="isNavbarHovered = false"
     >
-      <Menubar :model="menuItems" class="woodcraft-menubar">
-        <template #start>
-          <div class="nav-start">
-            <Button
-              icon="pi pi-bars"
-              text
-              rounded
-              class="mobile-menu-btn"
-              aria-label="Open navigation menu"
-              @click="openMobileSidebar"
-            />
-            <button type="button" class="brand" @click="navigateTo('/')">
-              <span class="brand-mark">WC</span>
-              <span class="brand-text">WoodCraft Workshop</span>
-            </button>
-          </div>
-        </template>
+      <nav class="woodcraft-menubar">
+        <div class="nav-start">
+          <Button
+            icon="pi pi-bars"
+            text
+            rounded
+            class="mobile-menu-btn"
+            aria-label="Open navigation menu"
+            @click="openMobileSidebar"
+          />
+          <button type="button" class="brand" @click="navigateTo('/')">
+            <span class="brand-mark">WC</span>
+            <span class="brand-text">WoodCraft Workshop</span>
+          </button>
+        </div>
 
-        <template #item="{ item, props }">
-          <a
-            v-bind="props.action"
-            class="menu-link"
-            @click.prevent="item.command"
+        <ul class="nav-menu-list">
+          <li
+            v-for="item in menuItems"
+            :key="item.path"
+            class="nav-menu-item"
           >
-            <i :class="item.icon" class="menu-icon"></i>
-            <span>{{ item.label }}</span>
-          </a>
-        </template>
+            <button
+              type="button"
+              class="menu-link"
+              :class="{ 'is-active': isActiveRoute(item.path) }"
+              @click="navigateTo(item.path)"
+            >
+              <i :class="item.icon" class="menu-icon"></i>
+              <span>{{ item.label }}</span>
+            </button>
+          </li>
+        </ul>
 
-        <template #end>
-          <div class="nav-actions">
+        <div class="nav-actions">
+          <Button
+            icon="pi pi-search"
+            rounded
+            text
+            class="icon-btn"
+            aria-label="Search"
+            @click="navigateTo('/products')"
+          />
+          <Button
+            icon="pi pi-user"
+            rounded
+            text
+            class="icon-btn"
+            aria-label="User account"
+            @click="navigateTo('/login')"
+          />
+          <div class="desktop-cart-wrap">
             <Button
-              icon="pi pi-search"
+              icon="pi pi-shopping-cart"
               rounded
               text
-              class="icon-btn"
-              aria-label="Search"
-              @click="navigateTo('/products')"
+              class="icon-btn cart-btn"
+              aria-label="Shopping cart"
+              @click="navigateTo('/cart')"
             />
-            <Button
-              icon="pi pi-user"
-              rounded
-              text
-              class="icon-btn"
-              aria-label="User account"
-              @click="navigateTo('/login')"
+            <Badge
+              v-if="cartCount > 0"
+              :value="cartCount"
+              severity="contrast"
+              class="cart-badge"
             />
-            <div class="desktop-cart-wrap">
-              <Button
-                icon="pi pi-shopping-cart"
-                rounded
-                text
-                class="icon-btn cart-btn"
-                aria-label="Shopping cart"
-                @click="navigateTo('/cart')"
-              />
-              <Badge
-                v-if="cartCount > 0"
-                :value="cartCount"
-                severity="contrast"
-                class="cart-badge"
-              />
-            </div>
           </div>
-        </template>
-      </Menubar>
+        </div>
+      </nav>
     </header>
 
     <Drawer
@@ -223,10 +226,11 @@ export default {
         <nav class="mobile-nav-links" aria-label="Mobile navigation">
           <button
             v-for="item in menuItems"
-            :key="item.label"
+            :key="item.path"
             type="button"
             class="mobile-nav-link"
-            @click="handleMobileItemClick(item)"
+            :class="{ 'is-active': isActiveRoute(item.path) }"
+            @click="handleMobileItemClick(item.path)"
           >
             <i :class="item.icon"></i>
             <span>{{ item.label }}</span>
@@ -297,6 +301,10 @@ export default {
     background-color 0.25s ease,
     box-shadow 0.25s ease,
     border-color 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
 .top-nav.is-transparent .woodcraft-menubar {
@@ -369,6 +377,20 @@ export default {
   text-shadow: none;
 }
 
+.nav-menu-list {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.nav-menu-item {
+  display: flex;
+}
+
 .menu-link {
   display: inline-flex;
   align-items: center;
@@ -377,9 +399,22 @@ export default {
   padding: 0.52rem 0.72rem;
   text-decoration: none;
   font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
+  color: inherit;
+}
+
+.menu-link:focus {
+  outline: none;
+  background: transparent;
+}
+
+.menu-link:active {
+  background: transparent;
 }
 
 .top-nav.is-transparent .menu-link:hover {
@@ -389,6 +424,18 @@ export default {
 .top-nav.is-opaque .menu-link:hover {
   background: rgba(99, 73, 44, 0.11);
   color: #2a2119;
+}
+
+.menu-link.is-active {
+  font-weight: 600;
+}
+
+.top-nav.is-transparent .menu-link.is-active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.top-nav.is-opaque .menu-link.is-active {
+  background: rgba(99, 73, 44, 0.15);
 }
 
 .menu-icon {
@@ -446,15 +493,6 @@ export default {
 
 .page-content.home-overlay {
   padding-top: 0;
-}
-
-.woodcraft-menubar :deep(.p-menubar-button) {
-  display: none;
-  color: inherit;
-}
-
-.woodcraft-menubar :deep(.p-menubar-root-list) {
-  flex-wrap: nowrap;
 }
 
 .mobile-sidebar-content {
@@ -524,6 +562,11 @@ export default {
 
 .mobile-nav-link:hover {
   background: #f5f5f5;
+}
+
+.mobile-nav-link.is-active {
+  background: #ececec;
+  font-weight: 600;
 }
 
 .mobile-nav-link i {
@@ -604,20 +647,13 @@ export default {
   .woodcraft-menubar {
     padding: 0.65rem 1rem;
   }
-  .woodcraft-menubar :deep(.p-menubar-start) {
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: auto;
-    margin-inline-end: 0;
-    min-width: 0;
-  }
 
   .nav-start {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-start;
   }
 
-  .woodcraft-menubar :deep(.p-menubar-root-list) {
+  .nav-menu-list {
     display: none;
   }
 
@@ -631,6 +667,7 @@ export default {
 
   .brand-text {
     font-size: 0.88rem;
+    display: inline;
   }
 
   .page-content {

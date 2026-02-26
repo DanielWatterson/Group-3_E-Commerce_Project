@@ -1,54 +1,52 @@
 import express from "express";
 const router = express.Router();
 
-// Import ALL customer controller functions
-import { 
-    getAllCustomers,
-    getCustomerById, 
-    getCustomerByEmail,
-    checkEmailExists,
-    postCustomer,
-    patchCustomer,     
-    deleteCustomer     
+import {
+  getAllCustomers,
+  getCustomerById,
+  getCustomerByEmail,
+  checkEmailExists,
+  postCustomer,
+  patchCustomer,
+  deleteCustomer,
 } from "./controllers/customerController.js";
 
-// Import usersCon with aliases to avoid conflicts
-import { 
-    getCustomersCon, 
-    postCustomerCon,
-    loginCon
-} from "./controllers/usersCon.js";
+import { getCustomersCon, postCustomerCon, loginCon } from "./controllers/usersCon.js";
 
-import { 
-    getAllProducts, 
-    getProductById, 
-    createProduct, 
-    updateProduct, 
-    deleteProduct 
+import {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 } from "./controllers/productController.js";
 
-import { 
-    getAllOrders, 
-    getOrderById, 
-    createOrder, 
-    updateOrder, 
-    deleteOrder 
+import {
+  getAllOrders,
+  getOrderById,
+  createOrder,
+  updateOrder,
+  deleteOrder,
 } from "./controllers/orderController.js";
 
-import { 
-    getOrderItems, 
-    addOrderItems, 
-    updateOrderItemQuantity, 
-    deleteOrderItem 
+import {
+  getOrderItems,
+  addOrderItems,
+  updateOrderItemQuantity,
+  deleteOrderItem,
 } from "./controllers/orderItemController.js";
 
-import { 
-    getAllPayments, 
-    getPaymentById, 
-    getPaymentsByOrderId, 
-    createPayment, 
-    updatePaymentStatus, 
-    deletePayment 
+import {
+  getAllPayments,
+  getPaymentById,
+  getPaymentsByOrderId,
+  createPayment,
+  createPayfastPayment,
+  handlePayfastNotify,
+  handlePayfastNotifyDebug,
+  getPayfastNotifyDebugLog,
+  updatePaymentStatus,
+  deletePayment,
 } from "./controllers/paymentController.js";
 
 // CUSTOMER ROUTES
@@ -57,10 +55,10 @@ router.get("/customer/id/:id", getCustomerById);
 router.get("/customer/email/:email", getCustomerByEmail);
 router.get("/customer/check-email", checkEmailExists);
 router.post("/customer", postCustomer);
-router.patch("/customer/:id", patchCustomer);    
-router.delete("/customer/:id", deleteCustomer);  
+router.patch("/customer/:id", patchCustomer);
+router.delete("/customer/:id", deleteCustomer);
 
-// USER ROUTES (from usersCon.js)
+// USER ROUTES
 router.get("/users-con", getCustomersCon);
 router.post("/users-con", postCustomerCon);
 router.post("/login", loginCon);
@@ -87,10 +85,24 @@ router.delete("/orders/items/:orderItemId", deleteOrderItem);
 
 // PAYMENT ROUTES
 router.get("/payments", getAllPayments);
-router.get("/payments/:id", getPaymentById);
 router.get("/payments/orders/:orderId", getPaymentsByOrderId);
+router.get("/payments/:id", getPaymentById);
 router.post("/payments", createPayment);
 router.patch("/payments/:id", updatePaymentStatus);
 router.delete("/payments/:id", deletePayment);
+
+// PAYFAST ROUTES
+router.post("/payfast/create-payment", createPayfastPayment);
+router.post(
+  "/payfast/notify",
+  express.raw({ type: "application/x-www-form-urlencoded" }),
+  handlePayfastNotify,
+);
+router.post(
+  "/payfast/notify-debug",
+  express.raw({ type: "application/x-www-form-urlencoded" }),
+  handlePayfastNotifyDebug,
+);
+router.get("/payfast/notify-debug/log", getPayfastNotifyDebugLog);
 
 export default router;
