@@ -246,19 +246,17 @@ export default {
             @click="navigateTo('/login')"
           />
           <div class="mobile-cart-wrap">
-            <Button
-              icon="pi pi-shopping-cart"
-              label="Cart"
-              outlined
-              class="mobile-footer-btn mobile-footer-cart"
-              @click="navigateTo('/cart')"
-            />
-            <Badge
-              v-if="cartCount > 0"
-              :value="cartCount"
-              severity="contrast"
-              class="mobile-cart-badge"
-            />
+<Button
+  icon="pi pi-shopping-cart"
+  class="cart-btn p-button-rounded p-button-outlined"
+  @click="$router.push('/cart')"
+/>
+
+<Badge
+  v-if="cartCount > 0"
+  :value="cartCount"
+  class="cart-badge-floating"
+/>
           </div>
         </div>
       </div>

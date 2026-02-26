@@ -25,11 +25,13 @@ import {
 import { 
     getAllProducts, 
     getProductById, 
+    getProductsWithWarranty,
     createProduct, 
     updateProduct, 
     decreaseStock,    
     increaseStock,
-    deleteProduct 
+    deleteProduct,
+    restoreProduct      
 } from "./controllers/productController.js";
 
 // ---------------- ORDER ROUTES ----------------
@@ -81,11 +83,13 @@ router.post("/login", loginCon);
 // ---------------- PRODUCT ROUTES ----------------
 router.get("/products", getAllProducts);
 router.get("/products/:id", getProductById);
+router.get("/products/warranty", getProductsWithWarranty);
 router.post("/products", createProduct);
 router.patch("/products/:id", updateProduct);
 router.patch("/products/:id/decrease-stock", decreaseStock);
 router.patch("/products/:id/increase-stock", increaseStock);
 router.delete("/products/:id", deleteProduct);
+router.patch("/products/:id/restore", restoreProduct);
 
 // ---------------- ORDER ROUTES ----------------
 router.get("/orders", getAllOrders);

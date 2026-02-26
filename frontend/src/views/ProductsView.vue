@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import axios from 'axios';
 
 export default {
   name: "ProductsView",
@@ -90,6 +91,45 @@ export default {
       
       return filtered; 
     });
+
+const getToastIcon = (severity) => {
+  switch(severity) {
+    case 'success': return 'pi pi-check-circle';
+    case 'error': return 'pi pi-times-circle';
+    case 'warn': return 'pi pi-exclamation-triangle';
+    case 'info': return 'pi pi-info-circle';
+    default: return 'pi pi-info-circle';
+  }
+};
+      const notification = ref({
+        visible: false,
+        severity: 'success',
+        summary: '',
+        detail: '',
+        life: 3000
+      });
+
+      // Add this helper function
+const showNotification = (severity, summary, detail, life = 3000) => {
+  // Hide any existing notification first
+  notification.value.visible = false;
+  
+  // Small delay to ensure smooth transition
+  setTimeout(() => {
+    notification.value = {
+      visible: true,
+      severity,
+      summary,
+      detail,
+      life
+    };
+  }, 100);
+  
+  // Auto-hide after duration
+  setTimeout(() => {
+    notification.value.visible = false;
+  }, life);
+};
 
     // Load products
     const loadProducts = async () => {
@@ -256,6 +296,10 @@ const addToCart = async (product) => {
       }).format(price || 0);
     };
 
+    const goToCart = () => {
+  router.push('/cart');
+};
+
     onMounted(() => {
       loadProducts();
     });
@@ -285,7 +329,9 @@ const addToCart = async (product) => {
       getStockSeverity,
       formatPrice,
       handleImageError,
-      backgroundStyle 
+      backgroundStyle,
+      toast,
+      goToCart
 };
   }
 };
@@ -293,12 +339,13 @@ const addToCart = async (product) => {
 
 <template>
   <div class="products-view" :style="backgroundStyle">
+    <div>
     <Toast />
     
     <!-- Page Header -->
     <div class="page-header">
       <h1>Our Products</h1>
-      <p>Discover our collection of high-quality digital products</p>
+      <p>Discover our collection of high-quality products</p>
     </div>
 
     <div class="content-card">
@@ -333,17 +380,21 @@ const addToCart = async (product) => {
         </div>
         
         <div class="toolbar-right">
-
-          <Button 
-            label="Cart" 
-            icon="pi pi-shopping-cart" 
-            class="p-button-outlined"
-            @click="$router.push('/cart')"
-          >
-          <Badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
-          </Button>
-        </div>
-      </div>
+  <button 
+    class="mobile-friendly-cart-btn" 
+    @click="goToCart"
+  >
+    <i class="pi pi-shopping-cart"></i>
+    <span 
+      v-if="cartCount > 0" 
+      class="cart-count-badge"
+    >
+      {{ cartCount }}
+    </span>
+  </button>
+                              </div>
+                  </div>
+                </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -486,50 +537,35 @@ const addToCart = async (product) => {
         <Button label="Yes" icon="pi pi-check" @click="deleteProduct" class="p-button-danger" />
       </template>
     </Dialog>
-  </div>
+    </div>
 </template>
 
 <style scoped>
 
 .products-view {
   position: relative;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
-  min-height: 100vh;
-}
-
-.products-view {
-  position: relative;
   max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
-  min-height: 100%;
+  min-height: 100vh;
   background-image: url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
-/* Add an overlay for darkness if needed */
-.products-view::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.2); /* Subtle dark overlay */
-  pointer-events: none;
-  z-index: 0;
+.content-card,
+.page-header {
+  position: relative;
+  z-index: 1;
 }
 
 .content-card {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);  /* Adds blur effect */
+  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
   border-radius: 16px;
+  backdrop-filter: blur(10px);  /* Adds blur effect */
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -554,13 +590,6 @@ const addToCart = async (product) => {
    font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
-.content-card {
-  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -568,6 +597,8 @@ const addToCart = async (product) => {
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .toolbar-left {
@@ -591,14 +622,37 @@ const addToCart = async (product) => {
   gap: 1rem;
 }
 
-.cart-badge {
-  margin-left: 0.5rem;
-}
-
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);  /* Force 4 columns */
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);  /* 3 columns on smaller screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);  /* 2 columns on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);  /* Still 2 columns on mobile landscape */
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .products-grid {
+    grid-template-columns: 1fr;  /* 1 column on mobile portrait */
+  }
 }
 
 .product-card {
@@ -789,5 +843,218 @@ const addToCart = async (product) => {
   .page-header h1 {
     font-size: 2rem;
   }
+
+}@media (max-width: 480px) {
+  :deep(.p-toast) {
+    width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
+  }
 }
+
+.mobile-friendly-cart-btn {
+  background: linear-gradient(135deg, #83ea66 0%, #4fa24b 100%);
+  border: none;
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  font-size: 24px;
+}
+
+.mobile-friendly-cart-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(234, 203, 102, 0.4);
+}
+
+.mobile-friendly-cart-btn:active {
+  transform: translateY(0);
+}
+
+.cart-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Desktop override - larger button */
+@media (min-width: 769px) {
+  .mobile-friendly-cart-btn {
+    width: auto;
+    height: auto;
+    border-radius: 50px;
+    padding: 12px 24px;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .cart-count-badge {
+    position: static;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    min-width: 24px;
+    height: 24px;
+  }
+}
+
+/* Ensure button is visible on all devices */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Custom Toast Notification - Single instance */
+.custom-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 90vw;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.custom-toast.success {
+  border-left: 4px solid #10b981;
+}
+
+.custom-toast.error {
+  border-left: 4px solid #ef4444;
+}
+
+.custom-toast.warn {
+  border-left: 4px solid #f59e0b;
+}
+
+.custom-toast.info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.toast-content i {
+  font-size: 1.5rem;
+}
+
+.custom-toast.success i {
+  color: #10b981;
+}
+
+.custom-toast.error i {
+  color: #ef4444;
+}
+
+.custom-toast.warn i {
+  color: #f59e0b;
+}
+
+.custom-toast.info i {
+  color: #3b82f6;
+}
+
+.toast-text {
+  flex: 1;
+}
+
+.toast-text strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.toast-text p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.toast-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.toast-close:hover {
+  color: #4b5563;
+}
+
+/* Animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .custom-toast {
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    min-width: auto;
+    width: calc(100vw - 40px);
+  }
+  
+  .fade-enter-from,
+  .fade-leave-to {
+    transform: translateY(30px);
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 992px) and (orientation: landscape) {
+  .custom-toast {
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    min-width: 250px;
+  }
+}
+
 </style>

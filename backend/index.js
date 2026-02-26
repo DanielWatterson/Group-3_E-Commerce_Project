@@ -3,8 +3,6 @@ import cors from "cors";
 import router from "./routes.js";
 import { getSingleCustomer } from "./models/usersDB.js";
 import { comparePassword, createToken } from "./middleware/auth.js"; 
-console.log("🔍 comparePassword imported:", comparePassword ? "✅ Yes" : "❌ No");
-console.log("🔍 createToken imported:", createToken ? "✅ Yes" : "❌ No");
 const app = express();
 
 app.use(express.json());              // Parse JSON bodies

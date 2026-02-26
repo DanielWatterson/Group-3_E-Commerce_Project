@@ -28,11 +28,24 @@ export const getProductById = async (req, res) => {
     }
 };
 
+        export const getProductsWithWarranty = async (req, res) => {
+    try {
+        const products = await getAllProductsMod();
+        const withWarranty = products.filter(p => p.has_warranty === 1 || p.has_warranty === true);
+        res.json(withWarranty);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const createProduct = async (req, res) => {
     try {
-        const { product_name, product_price, quantity, image_url } = req.body;
-        const result = await createProductMod(product_name, product_price, quantity, image_url);
-        res.status(201).json({ message: "Product created", product_id: result.insertId });
+        const { product_name, product_price, quantity, image_url, has_warranty = false, warranty_period_months = null } = req.body;
+        const result = await createProductMod(product_name, product_price, quantity, image_url, has_warranty, warranty_period_months);
+        res.status(201).json({ 
+            message: "Product created", 
+            product_id: result.insertId 
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -41,9 +54,15 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { product_name, product_price, quantity } = req.body;
-        await updateProductMod(id, product_name, product_price, quantity);
-        res.json({ message: "Product updated" });
+        const { product_name, product_price, quantity, has_warranty, warranty_period_months } = req.body;
+        
+        await updateProductMod(id, product_name, product_price, quantity, has_warranty, warranty_period_months);
+        
+        const updatedProduct = await getProductByIdMod(id);
+        res.json({ 
+            message: "Product updated", 
+            product: updatedProduct 
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -96,10 +115,30 @@ export const increaseStock = async (req, res) => {
     }
 };
 
+// export const deleteProduct = async (req, res) => {
+//     try {
+//         await deleteProductMod(req.params.id);
+//         res.json({ message: "Product deleted" });
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// };
+
+// Soft delete
 export const deleteProduct = async (req, res) => {
     try {
-        await deleteProductMod(req.params.id);
-        res.json({ message: "Product deleted" });
+        await softDeleteProduct(req.params.id);
+        res.json({ message: "Product deactivated successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Restore product
+export const restoreProduct = async (req, res) => {
+    try {
+        await restoreProduct(req.params.id);
+        res.json({ message: "Product restored successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
