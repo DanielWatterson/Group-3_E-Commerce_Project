@@ -95,6 +95,11 @@ const router = createRouter({
       name: 'paymentCancel',
       component: PaymentCancel,
       meta: { transition: 'page-fade' }
+    },
+    {
+      path: '/payment/notify',
+      name: 'paymentNotify',
+      component: () => import('@/views/PaymentNotify.vue')
     }
   ],
 })

@@ -8,7 +8,9 @@ import router from './router'
 import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
 import 'primeicons/primeicons.css'
+import '@fortawesome/fontawesome-free/css/all.min.css'
 import ToastService from 'primevue/toastservice'
+
 
 // Import all PrimeVue components used in the app
 import Menubar from 'primevue/menubar'
@@ -40,7 +42,6 @@ app.use(PrimeVue, {
 })
 app.use(ToastService)
 
-// Register all components
 app.component('Menubar', Menubar)
 app.component('Button', Button)
 app.component('Card', Card)
