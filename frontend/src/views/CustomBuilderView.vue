@@ -1,36 +1,47 @@
 <template>
   <div class="builder-page">
-    <!-- Mode Toggle -->
-    <div class="mode-toggle">
-      <button 
-        @click="mode = 'simple'"
-        :class="{ active: mode === 'simple' }"
-      >
-        🟢 Simple Mode
-      </button>
-      <button 
-        @click="mode = 'advanced'"
-        :class="{ active: mode === 'advanced' }"
-      >
-        🔧 Advanced Mode
-      </button>
-    </div>
+    <!-- Mobile menu toggle button -->
+    <button class="mobile-menu-toggle" @click="toggleMobilePanel" v-if="isMobile">
+      <i :class="showMobilePanel ? 'pi pi-times' : 'pi pi-bars'"></i>
+      {{ showMobilePanel ? ' Close' : ' Controls' }}
+    </button>
 
     <div class="builder-layout">
-      <!-- 3D Canvas -->
-      <div class="canvas-container">
+      <!-- 3D Canvas container -->
+      <div class="canvas-container" ref="canvasContainer">
+        <!-- Mode Toggle - Now positioned relative to canvas -->
+        <div class="mode-toggle" :class="{ 'mobile-mode-toggle': isMobile }">
+          <button 
+            @click="mode = 'simple'"
+            :class="{ active: mode === 'simple' }"
+          >
+            <i class="pi pi-star"></i>
+            Simple
+          </button>
+          <button 
+            @click="mode = 'advanced'"
+            :class="{ active: mode === 'advanced' }"
+          >
+            <i class="pi pi-cog"></i>
+            Advanced
+          </button>
+        </div>
+
         <TresCanvas clear-color="#1a1a1a" shadows>
-          <!-- Camera -->
-          <TresPerspectiveCamera :position="[5, 3, 8]" :look-at="[0, 1, 0]" />
+          <!-- Camera positioned for optimal viewing -->
+          <TresPerspectiveCamera :position="cameraPosition" :look-at="[0, 1, 0]" />
           
-          <!-- Controls -->
+          <!-- Controls with touch support for mobile -->
           <OrbitControls 
             :enable-damping="true" 
             :auto-rotate="autoRotate"
             :auto-rotate-speed="1.0"
+            :enable-zoom="true"
+            :enable-pan="true"
+            :enable-touch="true"
           />
           
-          <!-- Lighting -->
+          <!-- Basic lighting setup -->
           <TresAmbientLight :intensity="0.5" />
           <TresDirectionalLight 
             :position="[5, 5, 5]" 
@@ -42,10 +53,10 @@
             :intensity="0.5" 
           />
           
-          <!-- Floor grid -->
+          <!-- Reference grid on floor -->
           <TresGridHelper :args="[10, 20]" :position="[0, 0, 0]" />
           
-          <!-- The 3D Model -->
+          <!-- Dynamic model loader - switches based on selection -->
           <component 
             :is="currentModel" 
             :dimensions="dimensions"
@@ -55,28 +66,37 @@
         </TresCanvas>
       </div>
       
-      <!-- Controls Panel -->
-      <div class="controls-panel">
-        <h2>🎨 {{ mode === 'simple' ? 'Simple' : 'Advanced' }} Builder</h2>
+      <!-- Right side control panel -->
+      <div class="controls-panel" :class="{ 'mobile-visible': showMobilePanel, 'mobile-hidden': !showMobilePanel && isMobile }">
+        <div class="panel-header">
+          <h2>
+            <i :class="mode === 'simple' ? 'pi pi-star' : 'pi pi-cog'"></i>
+            {{ mode === 'simple' ? 'Simple' : 'Advanced' }} Builder
+          </h2>
+          <button class="close-mobile" @click="showMobilePanel = false" v-if="isMobile">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
         
-        <!-- Product Type Selection -->
+        <!-- Product type selection -->
         <div class="control-section">
-          <h3>Product Type</h3>
+          <h3><i class="pi pi-tag"></i> Product Type</h3>
           <div class="button-group">
             <button 
               v-for="type in productTypes" 
               :key="type.name"
               :class="{ active: selectedType === type.name }"
-              @click="selectedType = type.name"
+              @click="selectType(type.name)"
             >
+              <i :class="getTypeIcon(type.name)"></i>
               {{ type.name }}
             </button>
           </div>
         </div>
 
-        <!-- Material Selection -->
+        <!-- Material selection with color swatches -->
         <div class="control-section">
-          <h3>Material</h3>
+          <h3><i class="pi pi-palette"></i> Material</h3>
           <div class="material-grid">
             <div 
               v-for="material in materials" 
@@ -91,59 +111,57 @@
           </div>
         </div>
 
-        <!-- SIMPLE MODE CONTROLS -->
+        <!-- Simple mode controls - basic dimensions and features -->
         <template v-if="mode === 'simple'">
-          <!-- Overall Dimensions -->
           <div class="control-section">
-            <h3>Overall Size</h3>
+            <h3><i class="pi pi-arrows-alt"></i> Overall Size</h3>
             <div class="slider-group">
-              <label>Width: {{ dimensions.width }}cm</label>
+              <label><i class="pi pi-arrow-right"></i> Width: {{ dimensions.width }}cm</label>
               <input type="range" v-model.number="dimensions.width" :min="minWidth" :max="maxWidth" step="5">
             </div>
             <div class="slider-group">
-              <label>Depth: {{ dimensions.depth }}cm</label>
+              <label><i class="pi pi-arrow-down"></i> Depth: {{ dimensions.depth }}cm</label>
               <input type="range" v-model.number="dimensions.depth" :min="minDepth" :max="maxDepth" step="5">
             </div>
             <div class="slider-group">
-              <label>Height: {{ dimensions.height }}cm</label>
+              <label><i class="pi pi-arrow-up"></i> Height: {{ dimensions.height }}cm</label>
               <input type="range" v-model.number="dimensions.height" :min="minHeight" :max="maxHeight" step="5">
             </div>
           </div>
 
-          <!-- Simple Features (only applicable ones) -->
           <div class="control-section">
-            <h3>Features</h3>
+            <h3><i class="pi pi-star"></i> Features</h3>
             <div v-for="feature in simpleFeatures" :key="feature.name" class="feature-checkbox">
               <label>
                 <input type="checkbox" v-model="feature.enabled">
+                <i :class="getFeatureIcon(feature.name)"></i>
                 {{ feature.name }} (+R{{ feature.price }})
               </label>
             </div>
           </div>
         </template>
 
-        <!-- ADVANCED MODE CONTROLS - DYNAMIC BASED ON MODEL -->
+        <!-- Advanced mode controls - detailed customization -->
         <template v-if="mode === 'advanced'">
-          <!-- Main Dimensions (always shown) -->
           <div class="control-section">
-            <h3>Main Dimensions</h3>
+            <h3><i class="pi pi-arrows-alt"></i> Main Dimensions</h3>
             <div class="slider-group">
-              <label>Width: {{ dimensions.width }}cm</label>
+              <label><i class="pi pi-arrow-right"></i> Width: {{ dimensions.width }}cm</label>
               <input type="range" v-model.number="dimensions.width" :min="minWidth" :max="maxWidth" step="5">
             </div>
             <div class="slider-group">
-              <label>Depth: {{ dimensions.depth }}cm</label>
+              <label><i class="pi pi-arrow-down"></i> Depth: {{ dimensions.depth }}cm</label>
               <input type="range" v-model.number="dimensions.depth" :min="minDepth" :max="maxDepth" step="5">
             </div>
             <div class="slider-group">
-              <label>Height: {{ dimensions.height }}cm</label>
+              <label><i class="pi pi-arrow-up"></i> Height: {{ dimensions.height }}cm</label>
               <input type="range" v-model.number="dimensions.height" :min="minHeight" :max="maxHeight" step="5">
             </div>
           </div>
 
-          <!-- Desk/Table Specific Controls -->
+          <!-- Desk/Table specific controls -->
           <div class="control-section" v-if="isDeskOrTable">
-            <h3>Table Top</h3>
+            <h3><i class="pi pi-table"></i> Table Top</h3>
             <div class="slider-group">
               <label>Top Thickness: {{ dimensions.topThickness || 3 }}cm</label>
               <input type="range" v-model.number="dimensions.topThickness" min="1" max="10" step="0.5">
@@ -158,9 +176,9 @@
             </div>
           </div>
 
-          <!-- Chair Specific Controls -->
+          <!-- Chair specific controls -->
           <div class="control-section" v-if="selectedType === 'Chair'">
-            <h3>Seat Details</h3>
+            <h3><i class="pi pi-chair"></i> Seat Details</h3>
             <div class="slider-group">
               <label>Seat Thickness: {{ dimensions.seatThickness || 5 }}cm</label>
               <input type="range" v-model.number="dimensions.seatThickness" min="2" max="10" step="0.5">
@@ -175,9 +193,9 @@
             </div>
           </div>
 
-          <!-- Statue Specific Controls -->
+          <!-- Statue specific controls -->
           <div class="control-section" v-if="selectedType === 'Statue'">
-            <h3>Statue Proportions</h3>
+            <h3><i class="pi pi-image"></i> Statue Proportions</h3>
             <div class="slider-group">
               <label>Base Height: {{ dimensions.baseHeight || 15 }}cm</label>
               <input type="range" v-model.number="dimensions.baseHeight" min="5" max="30" step="1">
@@ -192,9 +210,9 @@
             </div>
           </div>
 
-          <!-- Position Offsets (for all models) -->
+          <!-- Position offset controls for fine-tuning placement -->
           <div class="control-section">
-            <h3>Position Offsets</h3>
+            <h3><i class="pi pi-arrows-h"></i> Position Offsets</h3>
             <div class="slider-group">
               <label>X Offset: {{ dimensions.xOffset || 0 }}cm</label>
               <input type="range" v-model.number="dimensions.xOffset" min="-50" max="50" step="5">
@@ -209,44 +227,52 @@
             </div>
           </div>
 
-          <!-- All Features -->
+          <!-- All available features -->
           <div class="control-section">
-            <h3>Features</h3>
+            <h3><i class="pi pi-star"></i> Features</h3>
             <div v-for="feature in availableFeatures" :key="feature.name" class="feature-checkbox">
               <label>
                 <input type="checkbox" v-model="feature.enabled">
+                <i :class="getFeatureIcon(feature.name)"></i>
                 {{ feature.name }} (+R{{ feature.price }})
               </label>
             </div>
           </div>
         </template>
 
-        <!-- Common Controls -->
+        <!-- Common view options -->
         <div class="control-section">
-          <h3>View Options</h3>
+          <h3><i class="pi pi-eye"></i> View Options</h3>
           <div class="feature-checkbox">
             <label>
               <input type="checkbox" v-model="autoRotate">
+              <i class="pi pi-sync"></i>
               Auto-rotate view
             </label>
           </div>
         </div>
 
-        <!-- Price and Actions -->
+        <!-- Price and action buttons -->
         <div class="price-section">
-          <div class="price">Total: R {{ totalPrice }}</div>
+          <div class="price">
+            <i class="pi pi-currency-rand"></i>
+            Total: R {{ totalPrice }}
+          </div>
           
           <div class="action-buttons">
             <button class="email-btn" @click="sendEmail">
-              📧 Email Design
+              <i class="pi pi-envelope"></i>
+              Email Design
             </button>
             <button class="add-to-cart-btn" @click="addToCart">
-              🛒 Add to Cart
+              <i class="pi pi-shopping-cart"></i>
+              Add to Cart
             </button>
           </div>
           
           <div v-if="emailSent" class="email-confirmation">
-            ✓ Design sent successfully!
+            <i class="pi pi-check-circle"></i>
+            Design sent successfully!
           </div>
         </div>
       </div>
@@ -255,13 +281,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, markRaw } from 'vue'
+import { ref, computed, watch, markRaw, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
 
-// Import model components
+// Import all model components
 import DeskModel from '@/components/models/DeskModel.vue'
 import ChairModel from '@/components/models/ChairModel.vue'
 import BenchModel from '@/components/models/BenchModel.vue'
@@ -271,10 +297,37 @@ import StatueModel from '@/components/models/StatueModel.vue'
 const router = useRouter()
 const store = useStore()
 
+// Mobile responsiveness
+const isMobile = ref(false)
+const showMobilePanel = ref(false)
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+  if (!isMobile.value) showMobilePanel.value = true
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+const toggleMobilePanel = () => {
+  showMobilePanel.value = !showMobilePanel.value
+}
+
+// Camera position adjusts based on screen size
+const cameraPosition = computed(() => {
+  return isMobile.value ? [5, 2.5, 8] : [4, 2, 7]
+})
+
 // Mode selection
 const mode = ref('simple')
 
-// Product types
+// Available product types with their size limits
 const productTypes = [
   { name: 'Desk', minWidth: 100, maxWidth: 240, minDepth: 60, maxDepth: 120, minHeight: 70, maxHeight: 80, model: markRaw(DeskModel) },
   { name: 'Chair', minWidth: 40, maxWidth: 70, minDepth: 40, maxDepth: 70, minHeight: 40, maxHeight: 50, model: markRaw(ChairModel) },
@@ -283,7 +336,33 @@ const productTypes = [
   { name: 'Statue', minWidth: 30, maxWidth: 100, minDepth: 30, maxDepth: 100, minHeight: 50, maxHeight: 200, model: markRaw(StatueModel) }
 ]
 
-// Materials
+// Icon mapping for product types
+const getTypeIcon = (type) => {
+  const icons = {
+    'Desk': 'pi pi-table',
+    'Chair': 'pi pi-chair',
+    'Bench': 'pi pi-th-large',
+    'Table': 'pi pi-table',
+    'Statue': 'pi pi-image'
+  }
+  return icons[type] || 'pi pi-tag'
+}
+
+// Icon mapping for features
+const getFeatureIcon = (feature) => {
+  const icons = {
+    'Cable Management': 'pi pi-wifi',
+    'RGB Lighting': 'pi pi-sun',
+    'Drawer': 'pi pi-box',
+    'Armrests': 'pi pi-chevron-circle-down',
+    'Cushion': 'pi pi-circle',
+    'Base Plinth': 'pi pi-square',
+    'Gold Leaf Accents': 'pi pi-star'
+  }
+  return icons[feature] || 'pi pi-check'
+}
+
+// Available wood types with their colors and price multipliers
 const materials = [
   { name: 'Oak', color: '#8B5A2B', price: 1.0 },
   { name: 'Walnut', color: '#4A2C1A', price: 1.3 },
@@ -293,34 +372,31 @@ const materials = [
   { name: 'Pine', color: '#F0D9B5', price: 0.8 }
 ]
 
-// State
+// Current selections
 const selectedType = ref('Desk')
 const selectedMaterial = ref('Oak')
 const autoRotate = ref(true)
 const emailSent = ref(false)
 
-// Dimensions with defaults for all models
+// All dimension values with sensible defaults
 const dimensions = ref({
   width: 150,
   depth: 75,
   height: 75,
-  // Common advanced props
   topThickness: 3,
   legWidth: 5,
   legOffset: 10,
   xOffset: 0,
   yOffset: 0,
   zOffset: 0,
-  // Chair specific
   seatThickness: 5,
   backHeight: 30,
-  // Statue specific
   baseHeight: 15,
   bodyHeight: 60,
   headSize: 15
 })
 
-// Features
+// All available features with pricing and applicable products
 const availableFeatures = ref([
   { name: 'Cable Management', price: 500, enabled: false, applicable: ['Desk', 'Table'] },
   { name: 'RGB Lighting', price: 800, enabled: false, applicable: ['Desk', 'Table', 'Bench', 'Statue'] },
@@ -331,7 +407,7 @@ const availableFeatures = ref([
   { name: 'Gold Leaf Accents', price: 1200, enabled: false, applicable: ['Statue'] }
 ])
 
-// Computed properties
+// Computed properties for dynamic values
 const currentModel = computed(() => {
   return productTypes.find(t => t.name === selectedType.value)?.model || DeskModel
 })
@@ -355,7 +431,7 @@ const enabledFeatures = computed(() => {
     .map(f => f.name)
 })
 
-// Simple features (only applicable ones)
+// Simple mode features
 const simpleFeatures = computed(() => {
   return availableFeatures.value.filter(f => 
     f.applicable.includes(selectedType.value) && 
@@ -363,17 +439,17 @@ const simpleFeatures = computed(() => {
   )
 })
 
+// The function calculates the total price of the current designs
+// The current designs = the selected type, material, dimensions, and enabled features
 const totalPrice = computed(() => {
   let base = 5000
   const materialMultiplier = materials.find(m => m.name === selectedMaterial.value)?.price || 1
   base *= materialMultiplier
   
-  // Base size pricing
   base += (dimensions.value.width - 100) * 20
   base += (dimensions.value.depth - 60) * 15
   base += (dimensions.value.height - 70) * 10
   
-  // Advanced mode extras
   if (mode.value === 'advanced') {
     if (dimensions.value.legWidth > 5) base += (dimensions.value.legWidth - 5) * 50
     if (dimensions.value.topThickness > 3) base += (dimensions.value.topThickness - 3) * 100
@@ -382,7 +458,6 @@ const totalPrice = computed(() => {
     }
   }
   
-  // Add feature costs
   availableFeatures.value.forEach(f => {
     if (f.enabled && f.applicable.includes(selectedType.value)) base += f.price
   })
@@ -390,16 +465,20 @@ const totalPrice = computed(() => {
   return Math.round(base)
 })
 
-// Reset dimensions when changing type
+// Close mobile panel after selection
+const selectType = (type) => {
+  selectedType.value = type
+  if (isMobile.value) showMobilePanel.value = false
+}
+
+// Reset dimensions when changing product type
 watch(selectedType, (newType) => {
   const type = productTypes.find(t => t.name === newType)
   if (type) {
-    // Set base dimensions
     dimensions.value.width = Math.round((type.minWidth + type.maxWidth) / 2)
     dimensions.value.depth = Math.round((type.minDepth + type.maxDepth) / 2)
     dimensions.value.height = Math.round((type.minHeight + type.maxHeight) / 2)
     
-    // Reset advanced props based on type
     dimensions.value.topThickness = 3
     dimensions.value.legWidth = newType === 'Chair' ? 3 : 5
     dimensions.value.legOffset = 10
@@ -407,7 +486,6 @@ watch(selectedType, (newType) => {
     dimensions.value.yOffset = 0
     dimensions.value.zOffset = 0
     
-    // Type-specific defaults
     if (newType === 'Chair') {
       dimensions.value.seatThickness = 5
       dimensions.value.backHeight = 30
@@ -419,7 +497,7 @@ watch(selectedType, (newType) => {
   }
 }, { immediate: true })
 
-// Actions
+// Clicking the add to cart button will add current design to cart
 const addToCart = () => {
   const customProduct = {
     product_id: Date.now(),
@@ -440,6 +518,7 @@ const addToCart = () => {
   router.push('/cart')
 }
 
+// Email design details to owner
 const sendEmail = () => {
   const subject = `Custom ${selectedType.value} Design (${mode.value} mode)`
   const body = `
@@ -466,27 +545,61 @@ Created with WoodCraft Workshop Builder
 
 <style scoped>
 .builder-page {
-  height: calc(100vh - 72px);
+  height: 100vh;
   background: #1a1a1a;
   color: white;
   overflow: hidden;
+  position: relative;
 }
 
 .builder-layout {
   display: flex;
   height: 100%;
+  width: 100%;
 }
 
 .canvas-container {
   flex: 1;
   height: 100%;
   background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative; /* Added for proper positioning of mode toggle */
 }
 
-/* Mode Toggle */
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  padding: 12px 24px;
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  cursor: pointer;
+  border: 2px solid #ffd700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-menu-toggle i {
+  font-size: 18px;
+}
+
+/* Simple/Advanced mode toggle - now positioned relative to canvas */
 .mode-toggle {
   position: absolute;
-  top: 90px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -499,15 +612,24 @@ Created with WoodCraft Workshop Builder
 }
 
 .mode-toggle button {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 30px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
   background: #444;
   color: white;
+  min-width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mode-toggle button i {
+  font-size: 13px;
 }
 
 .mode-toggle button.active {
@@ -520,6 +642,7 @@ Created with WoodCraft Workshop Builder
   background: #2a6f97;
 }
 
+/* Right side controls panel */
 .controls-panel {
   width: 400px;
   background: #2a2a2a;
@@ -527,13 +650,37 @@ Created with WoodCraft Workshop Builder
   overflow-y: auto;
   border-left: 2px solid #8b4513;
   box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease;
 }
 
-.controls-panel h2 {
-  margin: 0 0 20px 0;
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.panel-header h2 {
+  margin: 0;
   color: #ffd700;
-  text-align: center;
   font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-header h2 i {
+  color: #ffd700;
+}
+
+.close-mobile {
+  display: none;
+  background: none;
+  border: none;
+  color: #ffd700;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
 }
 
 .control-section {
@@ -550,6 +697,13 @@ Created with WoodCraft Workshop Builder
   font-size: 18px;
   border-bottom: 2px solid #8b4513;
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-section h3 i {
+  color: #ffd700;
 }
 
 .button-group {
@@ -568,6 +722,15 @@ Created with WoodCraft Workshop Builder
   transition: all 0.3s;
   font-size: 14px;
   font-weight: bold;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.button-group button i {
+  font-size: 14px;
 }
 
 .button-group button:hover {
@@ -621,10 +784,16 @@ Created with WoodCraft Workshop Builder
 }
 
 .slider-group label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 5px;
   color: #ddd;
   font-weight: bold;
+}
+
+.slider-group label i {
+  color: #ffd700;
 }
 
 .slider-group input {
@@ -659,6 +828,11 @@ Created with WoodCraft Workshop Builder
   font-size: 14px;
 }
 
+.feature-checkbox label i {
+  color: #ffd700;
+  width: 18px;
+}
+
 .feature-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -680,6 +854,14 @@ Created with WoodCraft Workshop Builder
   font-weight: bold;
   color: #ffd700;
   margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.price i {
+  color: #ffd700;
 }
 
 .action-buttons {
@@ -688,17 +870,24 @@ Created with WoodCraft Workshop Builder
   gap: 10px;
 }
 
-.add-to-cart-btn {
+.add-to-cart-btn, .email-btn {
   width: 100%;
   padding: 15px;
-  background: #8b4513;
-  color: white;
   border: none;
   border-radius: 6px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-to-cart-btn {
+  background: #8b4513;
+  color: white;
 }
 
 .add-to-cart-btn:hover {
@@ -708,16 +897,8 @@ Created with WoodCraft Workshop Builder
 }
 
 .email-btn {
-  width: 100%;
-  padding: 15px;
   background: #2a6f97;
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s;
 }
 
 .email-btn:hover {
@@ -733,6 +914,10 @@ Created with WoodCraft Workshop Builder
   border-radius: 6px;
   color: white;
   animation: fadeInOut 3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 @keyframes fadeInOut {
@@ -742,7 +927,7 @@ Created with WoodCraft Workshop Builder
   100% { opacity: 0; }
 }
 
-/* Scrollbar */
+/* Custom scrollbar for the controls panel */
 .controls-panel::-webkit-scrollbar {
   width: 8px;
 }
@@ -760,12 +945,193 @@ Created with WoodCraft Workshop Builder
   background: #a0522d;
 }
 
-/* Mobile Responsive */
+/* Mobile responsive styles */
+@media (max-width: 1024px) {
+  .controls-panel {
+    width: 350px;
+  }
+  
+  .button-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
   .mode-toggle {
-    top: 80px;
-    flex-direction: column;
+    top: 10px;
+  }
+  
+  .mode-toggle button {
+    padding: 6px 12px;
+    min-width: 70px;
+    font-size: 12px;
+  }
+
+  .builder-layout {
+    position: relative;
+  }
+
+  .canvas-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .controls-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 320px;
+    transform: translateX(100%);
+    z-index: 1000;
+    border-left: 2px solid #8b4513;
+    padding: 15px;
+  }
+
+  .controls-panel.mobile-visible {
+    transform: translateX(0);
+  }
+
+  .controls-panel.mobile-hidden {
+    transform: translateX(100%);
+  }
+
+  .close-mobile {
+    display: block;
+  }
+
+  .panel-header h2 {
+    font-size: 20px;
+  }
+
+  .control-section {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .control-section h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .button-group {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .button-group button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .material-grid {
+    gap: 6px;
+  }
+
+  .material-option {
+    padding: 6px;
+    font-size: 12px;
+  }
+
+  .color-swatch {
+    width: 20px;
+    height: 20px;
+  }
+
+  .slider-group {
+    margin-bottom: 12px;
+  }
+
+  .slider-group label {
+    font-size: 13px;
+  }
+
+  .feature-checkbox label {
+    font-size: 13px;
+  }
+
+  .price {
+    font-size: 24px;
+  }
+
+  .add-to-cart-btn, .email-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* Larger touch targets for mobile */
+  .button-group button,
+  .material-option,
+  .feature-checkbox label,
+  .mode-toggle button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feature-checkbox input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  .slider-group input {
+    height: 8px;
+  }
+
+  .slider-group input::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mode-toggle {
+    top: 5px;
     gap: 5px;
+  }
+  
+  .mode-toggle button {
+    padding: 4px 10px;
+    min-width: 65px;
+    font-size: 11px;
+  }
+
+  .controls-panel {
+    width: 90%;
+    max-width: 280px;
+  }
+
+  .panel-header h2 {
+    font-size: 18px;
+  }
+
+  .control-section {
+    padding: 10px;
+  }
+
+  .button-group {
+    grid-template-columns: 1fr;
+  }
+
+  .material-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .price {
+    font-size: 22px;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .mode-toggle {
+    top: 5px;
   }
   
   .controls-panel {
@@ -773,6 +1139,10 @@ Created with WoodCraft Workshop Builder
   }
   
   .button-group {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .material-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
