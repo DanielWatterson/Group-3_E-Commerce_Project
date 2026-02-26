@@ -206,10 +206,7 @@ export default {
       showConfirmDialog.value = true;
     };
 
-<<<<<<< HEAD
-=======
     // Process payment with PayFast
->>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
     const processPayment = async () => {
       if (!termsAccepted.value) {
         toast.add({
@@ -225,25 +222,6 @@ export default {
       showConfirmDialog.value = false;
 
       try {
-<<<<<<< HEAD
-        const total = Number(cartTotal.value) * 1.15;
-
-        const order = {
-          amount: total.toFixed(2),
-          item_name: cartItems.value.length === 1
-            ? cartItems.value[0].product_name
-            : `Order (${cartCount.value} items)`,
-          name_first: customerInfo.value.firstName?.trim() || "Customer",
-          name_last: customerInfo.value.lastName?.trim() || "",
-          email_address: customerInfo.value.email?.toLowerCase().trim() || "test@example.com",
-        };
-
-        localStorage.setItem("pendingOrder", JSON.stringify({
-          ...order,
-          items: cartItems.value,
-          shipping: customerInfo.value
-        }));
-=======
         const checkoutPayload = {
           customer: {
             firstName: customerInfo.value.firstName?.trim() || "",
@@ -272,7 +250,6 @@ export default {
             shipping: customerInfo.value,
           }),
         );
->>>>>>> 79c2dc5a5e7377ceb1c490899ae8008f1de2358b
 
         toast.add({
           severity: "info",
