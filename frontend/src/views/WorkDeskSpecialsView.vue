@@ -56,6 +56,7 @@ export default {
   background:
     radial-gradient(circle at top, rgba(106, 149, 146, 0.22), transparent 58%),
     linear-gradient(180deg, #132524 0%, #153230 58%, #edf3f2 58%, #edf3f2 100%);
+    font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-hero {
@@ -63,6 +64,7 @@ export default {
   margin: 0 auto 2.1rem;
   text-align: center;
   color: #e9f4f3;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .eyebrow {
@@ -76,11 +78,13 @@ export default {
 h1 {
   margin: 0.5rem 0 0.65rem;
   font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-hero p {
   margin: 0 0 1.2rem;
   line-height: 1.5;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .deals-grid {
@@ -89,6 +93,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .deal-card {
@@ -97,6 +102,7 @@ h1 {
   padding: 1.05rem 1rem 1.2rem;
   border: 1px solid rgba(63, 120, 116, 0.24);
   box-shadow: 0 8px 28px rgba(17, 45, 42, 0.08);
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .deal-badge {
@@ -108,17 +114,20 @@ h1 {
   border-radius: 999px;
   color: #fff;
   background: #2d8079;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 h2 {
   margin: 0.75rem 0 0.45rem;
   font-size: 1.1rem;
   color: #1f4542;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .deal-card p {
   margin: 0;
   color: #4f6b69;
   line-height: 1.45;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 </style>

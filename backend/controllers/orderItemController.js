@@ -103,7 +103,7 @@ export const updateOrderItemQuantity = async (req, res) => {
             return res.status(400).json({ error: 'Quantity is required' });
         }
         
-        // Optional: Check if the order item exists and get product_id to check inventory
+        // Check if the order item exists and get product_id to check inventory
         const orderItems = await getOrderItemsByOrderItemId(orderItemId);
         if (!orderItems || orderItems.length === 0) {
             return res.status(404).json({ error: 'Order item not found' });
@@ -121,7 +121,7 @@ export const updateOrderItemQuantity = async (req, res) => {
     }
 };
 
-// You might also need this helper function
+// helper function
 const getOrderItemsByOrderItemId = async (order_item_id) => {
     const [rows] = await pool.query(
         "SELECT * FROM order_items WHERE order_item_id = ?",

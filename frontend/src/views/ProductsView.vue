@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import axios from 'axios';
 
 export default {
   name: "ProductsView",
@@ -10,10 +11,23 @@ export default {
     const store = useStore();
     const router = useRouter();
     const toast = useToast();
-    
+
+    const handleImageError = (event) => {
+      event.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+    };
+
     const products = computed(() => store.state.products || []);
     const isAuthenticated = computed(() => store.getters.isAuthenticated);
     const cartCount = computed(() => store.getters.cartCount);
+    const backgroundStyle = computed(() => {
+  return {
+    backgroundImage: "url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    minHeight: '100vh'
+  };
+});
     
     const loading = ref(false);
     const searchQuery = ref('');
@@ -26,9 +40,9 @@ export default {
     
     const categories = ref([
       { name: 'All Products', value: null },
-      { name: 'Software', value: 'software' },
-      { name: 'AI Chatbot', value: 'ai chatbot' },
-      { name: 'Code', value: 'code' }
+      { name: 'Wooden Desks', value: 'Wooden' },
+      { name: 'Custom Desks', value: 'Custom' },
+
     ]);
 
     const sortOptions = ref([
@@ -36,7 +50,8 @@ export default {
       { name: 'Name (Z-A)', value: 'name_desc' },
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
-      { name: 'Stock (Low to High)', value: 'stock_asc' }
+      { name: 'Stock (Low to High)', value: 'stock_asc' },
+      { name: 'Stock (High to Low)', value: 'stock_desc' }
     ]);
     
     const selectedSort = ref('name_asc');
@@ -74,8 +89,47 @@ export default {
         }
       });
       
-      return filtered;
+      return filtered; 
     });
+
+const getToastIcon = (severity) => {
+  switch(severity) {
+    case 'success': return 'pi pi-check-circle';
+    case 'error': return 'pi pi-times-circle';
+    case 'warn': return 'pi pi-exclamation-triangle';
+    case 'info': return 'pi pi-info-circle';
+    default: return 'pi pi-info-circle';
+  }
+};
+      const notification = ref({
+        visible: false,
+        severity: 'success',
+        summary: '',
+        detail: '',
+        life: 3000
+      });
+
+      // Add this helper function
+const showNotification = (severity, summary, detail, life = 3000) => {
+  // Hide any existing notification first
+  notification.value.visible = false;
+  
+  // Small delay to ensure smooth transition
+  setTimeout(() => {
+    notification.value = {
+      visible: true,
+      severity,
+      summary,
+      detail,
+      life
+    };
+  }, 100);
+  
+  // Auto-hide after duration
+  setTimeout(() => {
+    notification.value.visible = false;
+  }, life);
+};
 
     // Load products
     const loadProducts = async () => {
@@ -163,21 +217,61 @@ export default {
     };
 
     // Add to cart
-    const addToCart = (product) => {
-      if (!isAuthenticated.value) {
-        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
-        router.push('/login');
-        return;
-      }
-      
-      if (product.quantity <= 0) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
-        return;
-      }
-      
-      store.dispatch('addToCart', product);
-      toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
-    };
+const addToCart = async (product) => {
+  console.log('🔵 ADD TO CART CLICKED', product);
+  
+  if (!isAuthenticated.value) {
+    console.log('🔴 User not authenticated');
+    toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
+    router.push('/login');
+    return;
+  }
+  
+  if (product.quantity <= 0) {
+    console.log('🔴 Product out of stock');
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
+    return;
+  }
+  
+  try {
+    console.log('🟡 Sending PATCH request to:', `http://localhost:5050/products/${product.product_id}/decrease-stock`);
+    console.log('🟡 Request body:', { quantity: 1 });
+    
+    const response = await axios.patch(`http://localhost:5050/products/${product.product_id}/decrease-stock`, {
+      quantity: 1
+    });
+    
+    console.log('🟢 PATCH response:', response.data);
+    
+    console.log('🟡 Dispatching to cart store');
+    store.dispatch('addToCart', product);
+    
+    // Update local product quantity
+    const productIndex = products.value.findIndex(p => p.product_id === product.product_id);
+    if (productIndex !== -1) {
+      const updatedProducts = [...products.value];
+      updatedProducts[productIndex] = {
+        ...updatedProducts[productIndex],
+        quantity: updatedProducts[productIndex].quantity - 1
+      };
+      store.state.products = updatedProducts;
+    }
+    
+    toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
+  } catch (error) {
+    console.error('🔴 ERROR in addToCart:', error);
+    console.log('🔴 Error response:', error.response?.data);
+    console.log('🔴 Error status:', error.response?.status);
+    console.log('🔴 Error headers:', error.response?.headers);
+    
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Error', 
+      detail: error.response?.data?.error || error.message || 'Failed to add to cart', 
+      life: 3000 
+    });
+  }
+};
 
     // Utility functions
     const getStockStatus = (quantity) => {
@@ -201,6 +295,10 @@ export default {
         currency: 'ZAR'
       }).format(price || 0);
     };
+
+    const goToCart = () => {
+  router.push('/cart');
+};
 
     onMounted(() => {
       loadProducts();
@@ -229,20 +327,25 @@ export default {
       addToCart,
       getStockStatus,
       getStockSeverity,
-      formatPrice
-    };
+      formatPrice,
+      handleImageError,
+      backgroundStyle,
+      toast,
+      goToCart
+};
   }
 };
 </script>
 
 <template>
-  <div class="products-view">
+  <div class="products-view" :style="backgroundStyle">
+    <div>
     <Toast />
     
     <!-- Page Header -->
     <div class="page-header">
       <h1>Our Products</h1>
-      <p>Discover our collection of high-quality digital products</p>
+      <p>Discover our collection of high-quality products</p>
     </div>
 
     <div class="content-card">
@@ -250,7 +353,6 @@ export default {
       <div class="toolbar">
         <div class="toolbar-left">
           <span class="p-input-icon-left">
-            <i class="pi pi-search" />
             <InputText 
               v-model="searchQuery" 
               placeholder="Search products..." 
@@ -278,23 +380,21 @@ export default {
         </div>
         
         <div class="toolbar-right">
-          <Button 
-            v-if="isAuthenticated"
-            label="Add Product" 
-            icon="pi pi-plus" 
-            class="p-button-success"
-            @click="openNew"
-          />
-          <Button 
-            label="Cart" 
-            icon="pi pi-shopping-cart" 
-            class="p-button-outlined"
-            @click="$router.push('/cart')"
-          >
-            <Badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
-          </Button>
-        </div>
-      </div>
+  <button 
+    class="mobile-friendly-cart-btn" 
+    @click="goToCart"
+  >
+    <i class="pi pi-shopping-cart"></i>
+    <span 
+      v-if="cartCount > 0" 
+      class="cart-count-badge"
+    >
+      {{ cartCount }}
+    </span>
+  </button>
+                              </div>
+                  </div>
+                </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -326,11 +426,19 @@ export default {
       <!-- Products Grid -->
       <div v-else class="products-grid">
         <div 
-          v-for="product in filteredProducts" 
-          :key="product.product_id" 
+          v-for="product in filteredProducts"
+          :key="product.product_id"
           class="product-card"
           :class="{ 'out-of-stock': product.quantity <= 0 }"
         >
+          <div class="product-image">
+            <img
+              :src="product.image_url"
+              :alt="product.product_name"
+              @error="handleImageError"
+            />
+          </div>
+          
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
@@ -359,19 +467,6 @@ export default {
               class="buy-btn"
               :class="{ 'p-button-outlined': product.quantity === 0 }"
             />
-            
-            <div v-if="isAuthenticated" class="admin-actions">
-              <Button 
-                icon="pi pi-pencil" 
-                class="p-button-rounded p-button-text p-button-info"
-                @click="editProduct(product)"
-              />
-              <Button 
-                icon="pi pi-trash" 
-                class="p-button-rounded p-button-text p-button-danger"
-                @click="confirmDelete(product)"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -397,7 +492,7 @@ export default {
       </div>
 
       <div class="field">
-        <label for="price">Price ($)</label>
+        <label for="price">Price (R)</label>
         <InputNumber 
           id="price" 
           v-model="product.product_price" 
@@ -442,38 +537,57 @@ export default {
         <Button label="Yes" icon="pi pi-check" @click="deleteProduct" class="p-button-danger" />
       </template>
     </Dialog>
-  </div>
+    </div>
 </template>
 
 <style scoped>
+
 .products-view {
-  max-width: 1400px;
+  position: relative;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
+  min-height: 100vh;
+  background-image: url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
+}
+
+.content-card,
+.page-header {
+  position: relative;
+  z-index: 1;
+}
+
+.content-card {
+  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
+  border-radius: 16px;
+  backdrop-filter: blur(10px);  /* Adds blur effect */
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .page-header {
   text-align: center;
   margin-bottom: 3rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-header h1 {
   font-size: 2.5rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #b9b6b2;
   margin-bottom: 0.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-header p {
-  color: #718096;
+  color: #ffffff;
   font-size: 1.1rem;
-}
-
-.content-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .toolbar {
@@ -483,6 +597,8 @@ export default {
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .toolbar-left {
@@ -494,6 +610,7 @@ export default {
 
 .search-input {
   width: 250px;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .category-dropdown, .sort-dropdown {
@@ -505,14 +622,37 @@ export default {
   gap: 1rem;
 }
 
-.cart-badge {
-  margin-left: 0.5rem;
-}
-
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);  /* Force 4 columns */
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);  /* 3 columns on smaller screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);  /* 2 columns on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);  /* Still 2 columns on mobile landscape */
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .products-grid {
+    grid-template-columns: 1fr;  /* 1 column on mobile portrait */
+  }
 }
 
 .product-card {
@@ -524,6 +664,7 @@ export default {
   border: 1px solid #e2e8f0;
   position: relative;
   overflow: hidden;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-card:hover {
@@ -534,6 +675,7 @@ export default {
 .product-card.out-of-stock {
   opacity: 0.7;
   background: #f7fafc;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-badge {
@@ -558,29 +700,34 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-name {
   margin: 0;
-  color: #2d3748;
+  color: #947234;
   font-size: 1.25rem;
   font-weight: 600;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-id {
-  color: #a0aec0;
+  color: #000000;
   font-size: 0.875rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-details {
   margin-bottom: 1.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-price {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: #a18848;
   margin-bottom: 0.5rem;
+   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .product-stock {
@@ -590,7 +737,7 @@ export default {
 }
 
 .stock-count {
-  color: #718096;
+  color: #719673;
   font-size: 0.875rem;
 }
 
@@ -598,6 +745,24 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.product-image {
+  width: 100%;
+  height: 250px;              /* HARD LIMIT */
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;         /* IMPORTANT */
 }
 
 .buy-btn {
@@ -613,7 +778,7 @@ export default {
 .loading-state, .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #718096;
+  color: #71967b;
 }
 
 .loading-state i {
@@ -628,7 +793,7 @@ export default {
 }
 
 .empty-state h3 {
-  color: #2d3748;
+  color: #6b5f24;
   margin-bottom: 0.5rem;
 }
 
@@ -643,8 +808,9 @@ export default {
 .field label {
   display: block;
   margin-bottom: 0.5rem;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
   font-weight: 500;
-  color: #4a5568;
+  color: #7d4423;
 }
 
 .confirmation-content {
@@ -677,5 +843,218 @@ export default {
   .page-header h1 {
     font-size: 2rem;
   }
+
+}@media (max-width: 480px) {
+  :deep(.p-toast) {
+    width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
+  }
 }
+
+.mobile-friendly-cart-btn {
+  background: linear-gradient(135deg, #83ea66 0%, #4fa24b 100%);
+  border: none;
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  font-size: 24px;
+}
+
+.mobile-friendly-cart-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(234, 203, 102, 0.4);
+}
+
+.mobile-friendly-cart-btn:active {
+  transform: translateY(0);
+}
+
+.cart-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Desktop override - larger button */
+@media (min-width: 769px) {
+  .mobile-friendly-cart-btn {
+    width: auto;
+    height: auto;
+    border-radius: 50px;
+    padding: 12px 24px;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .cart-count-badge {
+    position: static;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    min-width: 24px;
+    height: 24px;
+  }
+}
+
+/* Ensure button is visible on all devices */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Custom Toast Notification - Single instance */
+.custom-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 90vw;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.custom-toast.success {
+  border-left: 4px solid #10b981;
+}
+
+.custom-toast.error {
+  border-left: 4px solid #ef4444;
+}
+
+.custom-toast.warn {
+  border-left: 4px solid #f59e0b;
+}
+
+.custom-toast.info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.toast-content i {
+  font-size: 1.5rem;
+}
+
+.custom-toast.success i {
+  color: #10b981;
+}
+
+.custom-toast.error i {
+  color: #ef4444;
+}
+
+.custom-toast.warn i {
+  color: #f59e0b;
+}
+
+.custom-toast.info i {
+  color: #3b82f6;
+}
+
+.toast-text {
+  flex: 1;
+}
+
+.toast-text strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.toast-text p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.toast-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.toast-close:hover {
+  color: #4b5563;
+}
+
+/* Animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .custom-toast {
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    min-width: auto;
+    width: calc(100vw - 40px);
+  }
+  
+  .fade-enter-from,
+  .fade-leave-to {
+    transform: translateY(30px);
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 992px) and (orientation: landscape) {
+  .custom-toast {
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    min-width: 250px;
+  }
+}
+
 </style>
