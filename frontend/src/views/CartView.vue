@@ -244,7 +244,6 @@ export default {
     };
 
     // Process payment with PayFast
-    // In CartView.vue - processPayment method
     const processPayment = async () => {
       if (!termsAccepted.value) {
         toast.add({
@@ -260,33 +259,30 @@ export default {
       showConfirmDialog.value = false;
 
       try {
-        // Calculate total with VAT
-        const total = Number(cartTotal.value) * 1.15;
-
-        // Clean and prepare order data
-        const order = {
-          amount: total.toFixed(2),
+        const checkoutPayload = {
+          customer: {
+            firstName: customerInfo.value.firstName?.trim() || "",
+            lastName: customerInfo.value.lastName?.trim() || "",
+            email: customerInfo.value.email?.toLowerCase().trim() || "",
+            phone: customerInfo.value.phone?.trim() || "",
+          },
+          items: cartItems.value.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.cart_quantity,
+          })),
           item_name:
             cartItems.value.length === 1
               ? cartItems.value[0].product_name
               : `LumberLink Order (${cartCount.value} items)`,
-          name_first: customerInfo.value.firstName?.trim() || "Customer",
-          name_last: customerInfo.value.lastName?.trim() || "",
-          email_address: customerInfo.value.email?.toLowerCase().trim() || "",
-          cell_number: customerInfo.value.phone?.replace(/\D/g, "") || "",
-          item_description: cartItems.value
-            .map((i) => `${i.product_name} x${i.cart_quantity}`)
-            .join(", ")
-            .substring(0, 255),
         };
 
-        console.log("Order data for PayFast:", order);
+        const paymentSession = await payfastService.createPaymentSession(checkoutPayload);
 
-        // Store pending order
         localStorage.setItem(
           "pendingOrder",
           JSON.stringify({
-            ...order,
+            payment_id: paymentSession.payment_id,
+            order_id: paymentSession.order_id,
             items: cartItems.value,
             shipping: customerInfo.value,
           }),
@@ -299,16 +295,15 @@ export default {
           life: 3000,
         });
 
-        // Redirect to PayFast
         setTimeout(() => {
-          payfastService.redirectToPayFast(order);
-        }, 1500);
+          payfastService.redirectToPayFast(paymentSession);
+        }, 1200);
       } catch (error) {
-        console.error("Payment error:", error);
+        console.error("Payment error:", error?.response?.data || error);
         toast.add({
           severity: "error",
           summary: "Payment Failed",
-          detail: error.message || "Please try again",
+          detail: error?.response?.data?.error || error.message || "Please try again",
           life: 5000,
         });
         processingPayment.value = false;
@@ -1164,3 +1159,4 @@ export default {
   }
 }
 </style>
+

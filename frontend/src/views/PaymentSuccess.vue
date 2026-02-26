@@ -1,17 +1,41 @@
 <script setup>
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
+import axios from 'axios';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 
 const router = useRouter();
+const route = useRoute();
 const store = useStore();
 
-onMounted(() => {
-  // Clear the cart on successful payment
-  store.dispatch('clearCart');
-  localStorage.removeItem('pendingOrder');
+const checkingStatus = ref(true);
+const paymentConfirmed = ref(false);
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+
+onMounted(async () => {
+  const paymentId = Number(route.query.payment_id);
+
+  if (!Number.isInteger(paymentId) || paymentId <= 0) {
+    checkingStatus.value = false;
+    return;
+  }
+
+  try {
+    const { data } = await axios.get(`${apiBaseUrl}/payments/${paymentId}`);
+
+    if (data?.payment_status === 'completed') {
+      paymentConfirmed.value = true;
+      store.dispatch('clearCart');
+      localStorage.removeItem('pendingOrder');
+    }
+  } catch (error) {
+    console.error('Payment verification failed:', error);
+  } finally {
+    checkingStatus.value = false;
+  }
 });
 </script>
 
@@ -20,13 +44,33 @@ onMounted(() => {
     <Card class="status-card">
       <template #content>
         <div class="status-content">
-          <div class="success-icon">âœ“</div>
-          <h1>Payment Successful!</h1>
-          <p>Thank you for your purchase. Your order has been confirmed.</p>
-          <p class="order-info">A confirmation email has been sent to your email address.</p>
+          <div :class="paymentConfirmed ? 'success-icon' : 'pending-icon'">{{ paymentConfirmed ? '?' : '…' }}</div>
+          <h1>{{ paymentConfirmed ? 'Payment Successful!' : 'Payment Verification Pending' }}</h1>
+
+          <p v-if="checkingStatus">Checking your payment status...</p>
+          <p v-else-if="paymentConfirmed">Thank you for your purchase. Your order has been confirmed.</p>
+          <p v-else>
+            We could not confirm payment yet. If you completed payment, please refresh shortly or contact support.
+          </p>
+
+          <p class="order-info">
+            {{ paymentConfirmed ? 'A confirmation email has been sent to your email address.' : 'Your cart was not cleared.' }}
+          </p>
+
           <div class="status-actions">
             <Button label="Continue Shopping" @click="router.push('/products')" />
-            <Button label="Return Home" class="p-button-outlined" @click="router.push('/')" />
+            <Button
+              v-if="!paymentConfirmed"
+              label="Return to Cart"
+              class="p-button-outlined"
+              @click="router.push('/cart')"
+            />
+            <Button
+              v-else
+              label="Return Home"
+              class="p-button-outlined"
+              @click="router.push('/')"
+            />
           </div>
         </div>
       </template>
@@ -54,10 +98,10 @@ onMounted(() => {
   padding: 2rem;
 }
 
-.success-icon {
+.success-icon,
+.pending-icon {
   width: 80px;
   height: 80px;
-  background: #38a169;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -65,6 +109,14 @@ onMounted(() => {
   justify-content: center;
   font-size: 2.5rem;
   margin: 0 auto 1.5rem;
+}
+
+.success-icon {
+  background: #38a169;
+}
+
+.pending-icon {
+  background: #d69e2e;
 }
 
 h1 {
@@ -78,7 +130,7 @@ p {
 }
 
 .order-info {
-  color: #8B4513;
+  color: #8b4513;
   margin: 1rem 0 2rem;
 }
 
