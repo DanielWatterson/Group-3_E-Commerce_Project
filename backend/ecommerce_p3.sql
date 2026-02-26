@@ -18,10 +18,15 @@ CREATE TABLE `customer` (
   `product_price` DECIMAL(10,2) NOT NULL,
   `quantity` INT NOT NULL,
   `image_url` VARCHAR(500),
+  `has_warranty` BOOLEAN DEFAULT FALSE, 
+  `warranty_period_months` INT DEFAULT NULL,
+  `is_active` BOOLEAN DEFAULT TRUE,
+  `deleted_at` DATETIME NULL,
   PRIMARY KEY (`product_id`),
   CONSTRAINT chk_price_positive CHECK (product_price > 0),
   CONSTRAINT chk_quantity_nonnegative CHECK (quantity >= 0),
-  CONSTRAINT chk_stock_alert CHECK (quantity >= 0)
+  CONSTRAINT chk_stock_alert CHECK (quantity >= 0),
+  CONSTRAINT chk_warranty_period CHECK (warranty_period_months >= 0)
   );
   
 INSERT INTO `e_commerce`.`customer` (`customer_name`, `email`, `password`) 
@@ -31,28 +36,19 @@ VALUES ('Ronald', 'shadowdweller123456789@gmail.com', '@bys$SeAleD1');
 INSERT INTO `e_commerce`.`customer` (`customer_name`, `email`, `password`) 
 VALUES ('Ian', 'ianskywalker22@gmail.com', '@walker0fTh3$ky');
 
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`)
-VALUES ( 'Basic Wooden Desk', 2999.99 , 75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ( 'Standard Wooden Desk', 3999.99, 50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ( 'Premium Wooden Desk', 4999.99, 0,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ( 'Deluxe Wooden Desk', 5999.99, 40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Entry', 2999.99, 35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png' );
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Basic', 3999.99, 30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Plus', 4999.99, 25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Pro', 5999.99, 20 ,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Elite', 6999.99, 15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`)
-VALUES ('Custom Desk - Premium', 7999.99, 5,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
-INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`) 
-VALUES ('Custom Desk - Luxury', 8999.99, 20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
+INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`, `has_warranty`, `warranty_period_months`) 
+VALUES
+('Basic Wooden Desk', 2999.99, 75, 'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp', TRUE, 12),
+('Standard Wooden Desk', 3999.99, 50, 'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg', TRUE, 12),
+('Premium Wooden Desk', 4999.99, 0, 'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg', TRUE, 24),
+('Deluxe Wooden Desk', 5999.99, 40, 'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg', TRUE, 24),
+('Custom Desk - Entry', 2999.99, 35, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', FALSE, NULL),
+('Custom Desk - Basic', 3999.99, 30, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', FALSE, NULL),
+('Custom Desk - Plus', 4999.99, 25, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', TRUE, 12),
+('Custom Desk - Pro', 5999.99, 20, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 12),
+('Custom Desk - Elite', 6999.99, 15, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 24),
+('Custom Desk - Premium', 7999.99, 5, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 24),
+('Custom Desk - Luxury', 8999.99, 20, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 36);
 
 CREATE TABLE orders (
   order_id INT AUTO_INCREMENT PRIMARY KEY,

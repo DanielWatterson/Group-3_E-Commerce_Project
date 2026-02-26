@@ -32,7 +32,7 @@ CREATE TABLE `customer` (
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `email` (`email`),
   CONSTRAINT `chk_email_format` CHECK ((`email` like _utf8mb4'%@%.%'))
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'Marie','cutemarie@gmail.com','Im@tHeb3acH'),(2,'Ronald','shadowdweller123456789@gmail.com','@bys$SeAleD1'),(3,'Ian','ianskywalker22@gmail.com','@walker0fTh3$ky'),(4,'Jack Daniels','jackd@gmail.com','$2b$11$tG/cSjxMHL76ljryP7n1xupSQNOtXadE8Pd8weV6J0ZI7QAHf0dBq'),(5,'Sam Fish','Samfish@gmail.com','$2b$11$tRZXd0SHcVQA5DeXnBqwOObDljhlwe6jjChkPzRwS3AcDf.BxQkLu'),(6,'Daddy Lyon ','Harrow@gmail.com','$2b$11$Wgv5jUxnFHMoJoiGWTyj3OGge0BvCpdIKahkzFCPjvg7L.Nei2YSW'),(7,'Aoi Subarashi','promag@gmail.com','$2b$11$R7uRO.IUbacDyncDwzWEJeux5a9vUwYsTQcGtB3ws7VjCksRqwpm2'),(8,'amy-lee','amylee@gmail.com','$2b$11$MlX401fG5QWGYxEEiVXkzO6grtKqtWVXqVUyPrcI3z3aw0SWKnuAG'),(9,'obi-wan','mustafar@gmail.com','$2b$11$Qgj9cewpMnYAdMu7GNJToe9W8ga0KMntGKG5U4SBPeL9pgTYeUJXS'),(10,'Feeya','Lute@gmail.com','$2b$11$igkH2jnUV/qYLBY.aB1Q5eR3wsbpiX4iO2nDO.l6ZvCbFckUOLUY2');
+INSERT INTO `customer` VALUES (1,'Marie','cutemarie@gmail.com','Im@tHeb3acH'),(2,'Ronald','shadowdweller123456789@gmail.com','@bys$SeAleD1'),(3,'Ian','ianskywalker22@gmail.com','@walker0fTh3$ky');
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -94,7 +94,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-24 12:58:53'),(2,2,3,1,'2026-02-24 12:58:53'),(3,3,5,1,'2026-02-24 12:58:53');
+INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-26 12:43:52'),(2,2,3,1,'2026-02-26 12:43:52'),(3,3,5,1,'2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -126,7 +126,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,35.00,2800.00,'2026-02-24 12:58:53'),(2,2,'pending',4999.99,3999.99,20.00,1000.00,'2026-02-24 12:58:53'),(3,3,'paid',2999.99,2549.99,15.00,450.00,'2026-02-24 12:58:53');
+INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,35.00,2800.00,'2026-02-26 12:43:52'),(2,2,'pending',4999.99,3999.99,20.00,1000.00,'2026-02-26 12:43:52'),(3,3,'paid',2999.99,2549.99,15.00,450.00,'2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -159,7 +159,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed','1',5199.99,'pending','2026-02-24 12:58:53'),(2,2,4999.99,'paypal','pending',NULL,NULL,NULL,'2026-02-24 12:58:53'),(3,3,2999.99,'credit_card','failed','1',2999.99,'pending','2026-02-24 12:58:53');
+INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed',NULL,NULL,NULL,'2026-02-26 12:43:52'),(2,2,4999.99,'paypal','pending',NULL,NULL,NULL,'2026-02-26 12:43:52'),(3,3,2999.99,'credit_card','failed','1',2999.99,'pending','2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -176,11 +176,16 @@ CREATE TABLE `products` (
   `product_price` decimal(10,2) NOT NULL,
   `quantity` int NOT NULL,
   `image_url` varchar(500) DEFAULT NULL,
+  `has_warranty` tinyint(1) DEFAULT '0',
+  `warranty_period_months` int DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`product_id`),
   CONSTRAINT `chk_price_positive` CHECK ((`product_price` > 0)),
   CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0)),
-  CONSTRAINT `chk_stock_alert` CHECK ((`quantity` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `chk_stock_alert` CHECK ((`quantity` >= 0)),
+  CONSTRAINT `chk_warranty_period` CHECK ((`warranty_period_months` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -189,7 +194,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp'),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg'),(3,'Premium Wooden Desk',4999.99,25,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg'),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg'),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(10,'Custom Desk - Premium',7999.99,10,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
+INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp',1,12,1,NULL),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg',1,12,1,NULL),(3,'Premium Wooden Desk',4999.99,0,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg',1,24,1,NULL),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg',1,24,1,NULL),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',1,12,1,NULL),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,12,1,NULL),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(10,'Custom Desk - Premium',7999.99,5,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,36,1,NULL);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -220,4 +225,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-25 11:21:13
+-- Dump completed on 2026-02-26 12:47:29
