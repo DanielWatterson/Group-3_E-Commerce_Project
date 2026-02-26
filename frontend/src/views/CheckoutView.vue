@@ -103,27 +103,32 @@ export default {
       processing.value = true;
       
       try {
-        // Create order object
-        const order = {
-          order_id: 'ORDER-' + Date.now(),
-          amount: cartTotal.value * 1.15, // Including VAT
-          item_name: `LumberLink Order`,
-          item_description: `${cartItems.value.length} items: ${cartItems.value.map(i => i.product_name).join(', ')}`,
-          name_first: formData.value.firstName,
-          name_last: formData.value.lastName,
-          email_address: formData.value.email,
-          cell_number: formData.value.phone,
-          custom_int1: cartItems.value.length
+        const checkoutPayload = {
+          customer: {
+            firstName: formData.value.firstName,
+            lastName: formData.value.lastName,
+            email: formData.value.email,
+            phone: formData.value.phone,
+          },
+          items: cartItems.value.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.cart_quantity,
+          })),
+          item_name:
+            cartItems.value.length === 1
+              ? cartItems.value[0].product_name
+              : `LumberLink Order (${cartItems.value.length} items)`,
         };
-        
-        // Store order in localStorage temporarily
+
+        const paymentSession = await payfastService.createPaymentSession(checkoutPayload);
+
         localStorage.setItem('pendingOrder', JSON.stringify({
-          ...order,
+          payment_id: paymentSession.payment_id,
+          order_id: paymentSession.order_id,
           items: cartItems.value,
-          shipping: formData.value
+          shipping: formData.value,
         }));
         
-        // Show processing toast
         toast.add({
           severity: 'info',
           summary: 'Redirecting to PayFast',
@@ -131,17 +136,16 @@ export default {
           life: 3000
         });
         
-        // Redirect to PayFast after a short delay
         setTimeout(() => {
-          payfastService.redirectToPayFast(order);
+          payfastService.redirectToPayFast(paymentSession);
         }, 1500);
         
       } catch (error) {
-        console.error('Payment error:', error);
+        console.error('Payment error:', error?.response?.data || error);
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to process payment. Please try again.',
+          detail: error?.response?.data?.error || 'Failed to process payment. Please try again.',
           life: 5000
         });
         processing.value = false;
@@ -643,3 +647,4 @@ export default {
   }
 }
 </style>
+
