@@ -67,16 +67,13 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to, from, next) => {
-  const isAuthenticated = store.getters.isAuthenticated;
-
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next("/login");
-  } else if (to.path === "/login" && isAuthenticated) {
-    next("/");
-  } else {
-    next();
+router.beforeEach((to, from) => {
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated()) {
+      return '/login'; 
+    }
   }
+  return true;
 });
 
 export default router;

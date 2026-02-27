@@ -119,18 +119,22 @@ export default {
       @mouseenter="isNavbarHovered = true"
       @mouseleave="isNavbarHovered = false"
     >
-      <nav class="woodcraft-menubar">
+      <nav class="woodcraft-menubar">  <!-- ← ADD THIS MISSING TAG -->
         <div class="nav-start">
-          <Button
-            icon="pi pi-bars"
-            text
-            rounded
-            class="mobile-menu-btn"
-            aria-label="Open navigation menu"
+          <button 
+            class="mobile-menu-btn" 
             @click="openMobileSidebar"
-          />
+            aria-label="Open navigation menu"
+          >
+            <i class="pi pi-bars"></i>
+          </button>
+          
           <button type="button" class="brand" @click="navigateTo('/')">
-            <span class="brand-mark">WC</span>
+            <img 
+              src="/images/Wood_logo.png" 
+              alt="WoodCraft Workshop" 
+              class="brand-image"
+            />
             <span class="brand-text">WoodCraft Workshop</span>
           </button>
         </div>
@@ -279,6 +283,7 @@ export default {
   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
+/* ===== TOP NAVIGATION ===== */
 .top-nav {
   position: fixed;
   inset: 0 0 auto 0;
@@ -317,6 +322,7 @@ export default {
   backdrop-filter: blur(6px);
 }
 
+/* ===== BRAND / LOGO ===== */
 .brand {
   display: inline-flex;
   align-items: center;
@@ -327,16 +333,11 @@ export default {
   padding: 0;
 }
 
-.nav-start {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.mobile-menu-btn {
-  display: none;
-  width: 2.25rem;
-  height: 2.25rem;
+.brand-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .brand-mark {
@@ -359,22 +360,31 @@ export default {
   letter-spacing: 0.02em;
 }
 
-.top-nav.is-transparent .brand-text,
-.top-nav.is-transparent .menu-link,
-.top-nav.is-transparent .icon-btn,
-.top-nav.is-transparent .mobile-menu-btn {
-  color: #f8f3eb;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+/* ===== NAVIGATION START ===== */
+.nav-start {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
-.top-nav.is-opaque .brand-text,
-.top-nav.is-opaque .menu-link,
-.top-nav.is-opaque .icon-btn,
-.top-nav.is-opaque .mobile-menu-btn {
-  color: #3f3023;
-  text-shadow: none;
+.mobile-menu-btn {
+  display: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.25rem;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
 }
 
+.mobile-menu-btn:hover {
+  background: rgba(99, 73, 44, 0.1);
+}
+
+/* ===== NAVIGATION MENU ===== */
 .nav-menu-list {
   display: flex;
   align-items: center;
@@ -408,20 +418,10 @@ export default {
 
 .menu-link:focus {
   outline: none;
-  background: transparent;
 }
 
-.menu-link:active {
-  background: transparent;
-}
-
-.top-nav.is-transparent .menu-link:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.top-nav.is-opaque .menu-link:hover {
-  background: rgba(99, 73, 44, 0.11);
-  color: #2a2119;
+.menu-icon {
+  font-size: 0.95rem;
 }
 
 .menu-link.is-active {
@@ -436,10 +436,7 @@ export default {
   background: rgba(99, 73, 44, 0.15);
 }
 
-.menu-icon {
-  font-size: 0.95rem;
-}
-
+/* ===== NAVIGATION ACTIONS ===== */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -484,6 +481,24 @@ export default {
   z-index: 2;
 }
 
+/* ===== TEXT COLORS ===== */
+.top-nav.is-transparent .brand-text,
+.top-nav.is-transparent .menu-link,
+.top-nav.is-transparent .icon-btn,
+.top-nav.is-transparent .mobile-menu-btn {
+  color: #f8f3eb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.top-nav.is-opaque .brand-text,
+.top-nav.is-opaque .menu-link,
+.top-nav.is-opaque .icon-btn,
+.top-nav.is-opaque .mobile-menu-btn {
+  color: #3f3023;
+  text-shadow: none;
+}
+
+/* ===== PAGE CONTENT ===== */
 .page-content {
   min-height: 100vh;
   padding-top: 72px;
@@ -493,6 +508,7 @@ export default {
   padding-top: 0;
 }
 
+/* ===== MOBILE SIDEBAR ===== */
 .mobile-sidebar-content {
   display: flex;
   flex-direction: column;
@@ -563,7 +579,8 @@ export default {
 }
 
 .mobile-nav-link.is-active {
-  background: #ececec;
+  background: #8b4513;
+  color: white;
   font-weight: 600;
 }
 
@@ -595,7 +612,7 @@ export default {
   overflow: visible;
 }
 
-.mobile-cart-badge {
+.mobile-cart-badge-floating {
   position: absolute;
   top: -0.2rem;
   right: 0.1rem;
@@ -616,13 +633,20 @@ export default {
   pointer-events: none;
 }
 
+/* ===== TABLET STYLES (UP TO 1160px) ===== */
 @media (max-width: 1160px) {
   .woodcraft-menubar {
     padding: 0.65rem 1rem;
   }
 
+  .brand-image {
+    width: 32px;
+    height: 32px;
+  }
+
   .brand-text {
-    display: none;
+    font-size: 0.95rem;
+    display: inline; /* Keep text visible */
   }
 
   .menu-link {
@@ -641,28 +665,39 @@ export default {
   }
 }
 
+/* ===== MOBILE STYLES (UP TO 960px) ===== */
 @media (max-width: 960px) {
   .woodcraft-menubar {
     padding: 0.65rem 1rem;
+    gap: 0.5rem;
   }
 
   .nav-start {
     width: auto;
     justify-content: flex-start;
+    flex: 1;
   }
 
+  /* Hide desktop navigation */
   .nav-menu-list {
     display: none;
   }
 
-  .mobile-menu-btn {
-    display: inline-flex;
-  }
-
+  /* Hide desktop action buttons */
   .nav-actions {
     display: none;
   }
 
+  /* Show mobile menu button */
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .brand-image {
+    width: 36px;
+    height: 36px;
+  }
+  
   .brand-text {
     font-size: 0.88rem;
     display: inline;
@@ -674,6 +709,18 @@ export default {
 
   .page-content.home-overlay {
     padding-top: 0;
+  }
+}
+
+/* ===== SMALL MOBILE STYLES (UP TO 480px) ===== */
+@media (max-width: 480px) {
+  .brand-image {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .brand-text {
+    font-size: 0.8rem;
   }
 }
 </style>
