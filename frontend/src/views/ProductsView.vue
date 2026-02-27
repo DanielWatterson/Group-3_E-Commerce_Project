@@ -275,16 +275,16 @@ const addToCart = async (product) => {
 
     // Utility functions
     const getStockStatus = (quantity) => {
-      if (quantity <= 0) return 'OUTOFSTOCK';
-      if (quantity < 10) return 'LOWSTOCK';
-      return 'INSTOCK';
+      if (quantity <= 0) return 'OUT OF STOCK';
+      if (quantity < 10) return 'LOW STOCK';
+      return 'IN STOCK';
     };
 
     const getStockSeverity = (status) => {
       switch(status) {
-        case 'INSTOCK': return 'success';
-        case 'LOWSTOCK': return 'warn';
-        case 'OUTOFSTOCK': return 'danger';
+        case 'IN STOCK': return 'success';
+        case 'LOW STOCK': return 'warn';
+        case 'OUT OF STOCK': return 'danger';
         default: return null;
       }
     };
