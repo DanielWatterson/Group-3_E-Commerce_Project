@@ -20,6 +20,7 @@ export default {
     const selectedCategory = ref('all');
     
     const categories = ref([
+<<<<<<< HEAD
       { name: 'All Products', value: 'all' },
       { name: 'Desks', value: 'desk' },
       { name: 'Chairs', value: 'chair' },
@@ -29,6 +30,12 @@ export default {
       { name: 'Kitchen', value: 'kitchen' },
       { name: 'Accessories', value: 'accessories' },
       { name: 'Decor', value: 'decor' }
+=======
+      { name: 'All Products', value: null },
+      { name: 'Desk', value: 'desk' },
+      { name: 'Tableware', value: 'tableware' },
+
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
     ]);
 
     const sortOptions = ref([
@@ -36,7 +43,11 @@ export default {
       { name: 'Name (Z-A)', value: 'name_desc' },
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
+<<<<<<< HEAD
       { name: 'Stock (Low to High)', value: 'stock_asc' }
+=======
+      { name: 'Stock (Low to High)', value: 'stock_asc' },
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
     ]);
     
     const selectedSort = ref('name_asc');
@@ -210,12 +221,30 @@ export default {
         </div>
         
         <div class="toolbar-right">
+<<<<<<< HEAD
           <button class="cart-btn-mobile" @click="goToCart">
             <i class="pi pi-shopping-cart"></i>
             <span v-if="cartCount > 0" class="cart-badge-mobile">{{ cartCount }}</span>
           </button>
         </div>
       </div>
+=======
+  <button 
+    class="mobile-friendly-cart-btn" 
+    @click="goToCart"
+  >
+    <i class="pi pi-shopping-cart"></i>
+    <span 
+      v-if="cartCount > 0" 
+      class="cart-count-badge"
+    >
+      {{ cartCount }}
+    </span>
+  </button>
+ </div>
+                  </div>
+                </div>
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
 
       <div v-if="loading" class="loading-state">
         <i class="pi pi-spin pi-spinner"></i>
@@ -242,8 +271,13 @@ export default {
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
+<<<<<<< HEAD
           <div class="product-image">
             <i class="pi pi-image"></i>
+=======
+          <div class="product-header">
+            <h3 class="product-name">{{ product.product_name }}</h3>
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
           </div>
           
           <div class="product-info">
@@ -263,11 +297,37 @@ export default {
             <button 
               @click="addToCart(product)" 
               :disabled="product.quantity === 0"
+<<<<<<< HEAD
               class="add-to-cart-btn"
             >
               <i class="pi pi-shopping-cart"></i>
               {{ product.quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}
             </button>
+=======
+              :label="product.quantity > 0 ? 'Add to Cart' : 'Out of Stock'"
+              icon="pi pi-shopping-cart"
+              class="buy-btn"
+              :class="{ 'p-button-outlined': product.quantity === 0 }"
+            />
+
+            <!-- Description Toggle -->
+<button
+  class="btn btn-sm btn-outline-secondary w-100 mb-2"
+  data-bs-toggle="collapse"
+  :data-bs-target="`#desc-${product.product_id}`"
+  aria-expanded="false"
+>
+  View Description
+</button>
+
+<!-- Product Description Dropdown -->
+<details class="product-description">
+  <summary>View Description</summary>
+  <p>
+    {{ product.description || 'No description available.' }}
+  </p>
+</details>
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
           </div>
         </div>
       </div>
@@ -280,6 +340,75 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+<<<<<<< HEAD
+=======
+  min-height: 100vh;
+  background-image: url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Product description dropdown */
+.product-description {
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Remove default marker */
+.product-description summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7c6a2d;
+  list-style: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Custom arrow */
+.product-description summary::after {
+  content: "▾";
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+/* Rotate arrow when open */
+.product-description[open] summary::after {
+  transform: rotate(180deg);
+}
+
+/* Hide default disclosure triangle */
+.product-description summary::-webkit-details-marker {
+  display: none;
+}
+
+.product-description p {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.content-card,
+.page-header {
+  position: relative;
+  z-index: 1;
+}
+
+.content-card {
+  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
+  border-radius: 16px;
+  backdrop-filter: blur(10px);  /* Adds blur effect */
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+>>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
 }
 
 .page-header {
