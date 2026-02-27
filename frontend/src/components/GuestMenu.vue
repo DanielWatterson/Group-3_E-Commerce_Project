@@ -36,7 +36,7 @@
           <button @click="navigateTo('/login')" class="menu-item">
             <i class="pi pi-sign-in"></i>Login
           </button>
-          <button @click="navigateTo('/login')" class="menu-item">
+          <button @click="navigateTo('/login?mode=signup')" class="menu-item">
             <i class="pi pi-user-plus"></i>Sign Up
           </button>
         </div>

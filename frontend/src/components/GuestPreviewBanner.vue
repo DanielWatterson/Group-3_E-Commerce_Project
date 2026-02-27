@@ -24,7 +24,7 @@ const store = useStore();
 const isGuest = computed(() => store.getters.isGuest);
 
 const goToLogin = () => router.push("/login");
-const goToSignup = () => router.push("/login");
+const goToSignup = () => router.push("/login?mode=signup");
 </script>
 
 <style scoped>

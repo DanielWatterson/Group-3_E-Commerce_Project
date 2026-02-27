@@ -29,6 +29,7 @@ export default {
     const processingPayment = ref(false);
     const showConfirmDialog = ref(false);
     const termsAccepted = ref(false);
+    const paymentMethod = ref("payfast");
 
     const customerInfo = ref({
       firstName: localStorage.getItem("userName")?.split(" ")[0] || "",
@@ -43,13 +44,20 @@ export default {
     });
 
     const handleImageError = (event) => {
-  event.target.style.display = 'none';
-  event.target.parentElement.innerHTML = '<i class="pi pi-box"></i>';
-}
+      event.target.style.display = "none";
+      event.target.parentElement.innerHTML = '<i class="pi pi-box"></i>';
+    };
 
     const provinces = ref([
-      "Gauteng", "Western Cape", "KwaZulu-Natal", "Eastern Cape",
-      "Free State", "Limpopo", "Mpumalanga", "North West", "Northern Cape"
+      "Gauteng",
+      "Western Cape",
+      "KwaZulu-Natal",
+      "Eastern Cape",
+      "Free State",
+      "Limpopo",
+      "Mpumalanga",
+      "North West",
+      "Northern Cape",
     ]);
 
     const formatPrice = (price) => {
@@ -162,7 +170,16 @@ export default {
     };
 
     const validateCustomerInfo = () => {
-      const { firstName, lastName, email, phone, address, city, province, postalCode } = customerInfo.value;
+      const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        province,
+        postalCode,
+      } = customerInfo.value;
       if (!firstName || !lastName || !email || !phone) {
         toast.add({
           severity: "warn",
@@ -225,23 +242,39 @@ export default {
       showConfirmDialog.value = false;
 
       try {
-        const total = Number(cartTotal.value) * 1.15;
+        if (paymentMethod.value !== "payfast") {
+          throw new Error("Unsupported payment method selected");
+        }
 
-        const order = {
-          amount: total.toFixed(2),
-          item_name: cartItems.value.length === 1
-            ? cartItems.value[0].product_name
-            : `Order (${cartCount.value} items)`,
-          name_first: customerInfo.value.firstName?.trim() || "Customer",
-          name_last: customerInfo.value.lastName?.trim() || "",
-          email_address: customerInfo.value.email?.toLowerCase().trim() || "test@example.com",
+        const checkoutPayload = {
+          customer: {
+            firstName: customerInfo.value.firstName?.trim() || "Customer",
+            lastName: customerInfo.value.lastName?.trim() || "",
+            email: customerInfo.value.email?.toLowerCase().trim() || "",
+            phone: customerInfo.value.phone?.trim() || "",
+          },
+          items: cartItems.value.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.cart_quantity,
+          })),
+          item_name:
+            cartItems.value.length === 1
+              ? cartItems.value[0].product_name
+              : `LumberLink Order (${cartItems.value.length} items)`,
         };
 
-        localStorage.setItem("pendingOrder", JSON.stringify({
-          ...order,
-          items: cartItems.value,
-          shipping: customerInfo.value
-        }));
+        const paymentSession =
+          await payfastService.createPaymentSession(checkoutPayload);
+
+        localStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            payment_id: paymentSession.payment_id,
+            order_id: paymentSession.order_id,
+            items: cartItems.value,
+            shipping: customerInfo.value,
+          }),
+        );
 
         toast.add({
           severity: "info",
@@ -251,14 +284,15 @@ export default {
         });
 
         setTimeout(() => {
-          payfastService.redirectToPayFast(order);
+          payfastService.redirectToPayFast(paymentSession);
         }, 1500);
       } catch (error) {
-        console.error("Payment error:", error);
+        console.error("Payment error:", error?.response?.data || error);
         toast.add({
           severity: "error",
           summary: "Payment Failed",
-          detail: error.message || "Please try again",
+          detail:
+            error?.response?.data?.error || error.message || "Please try again",
           life: 5000,
         });
         processingPayment.value = false;
@@ -279,6 +313,7 @@ export default {
       processingPayment,
       showConfirmDialog,
       termsAccepted,
+      paymentMethod,
       customerInfo,
       provinces,
       formatPrice,
@@ -289,7 +324,7 @@ export default {
       openConfirmDialog,
       processPayment,
       continueShopping,
-      handleImageError
+      handleImageError,
     };
   },
 };
@@ -298,7 +333,7 @@ export default {
 <template>
   <div class="cart-view">
     <Toast />
-    
+
     <div class="cart-header">
       <button class="back-btn" @click="continueShopping">
         <i class="pi pi-arrow-left"></i>
@@ -327,60 +362,78 @@ export default {
         <div class="cart-main">
           <div class="cart-items-section">
             <h2>Your Items</h2>
-            
-            <div v-for="item in cartItems" :key="item.product_id" class="cart-item">
-                    <div class="item-image">
-                      <img 
-                        v-if="item.image_url" 
-                        :src="item.image_url" 
-                        :alt="item.product_name"
-                        @error="handleImageError"
-                      />
-                      <i v-else class="pi pi-box"></i>
-                    </div>
-              
+
+            <div
+              v-for="item in cartItems"
+              :key="item.product_id"
+              class="cart-item"
+            >
+              <div class="item-image">
+                <img
+                  v-if="item.image_url"
+                  :src="item.image_url"
+                  :alt="item.product_name"
+                  @error="handleImageError"
+                />
+                <i v-else class="pi pi-box"></i>
+              </div>
+
               <div class="item-details">
                 <div class="item-header">
                   <h3>{{ item.product_name }}</h3>
-                  <span class="item-price">{{ formatPrice(item.product_price * item.cart_quantity) }}</span>
+                  <span class="item-price">{{
+                    formatPrice(item.product_price * item.cart_quantity)
+                  }}</span>
                 </div>
-                
+
                 <div class="item-meta">
-                  <span class="item-unit-price">{{ formatPrice(item.product_price) }} each</span>
+                  <span class="item-unit-price"
+                    >{{ formatPrice(item.product_price) }} each</span
+                  >
                 </div>
-                
+
                 <div class="item-actions">
                   <div class="quantity-controls">
-                    <button 
-                      class="qty-btn" 
+                    <button
+                      class="qty-btn"
                       :disabled="updating || item.cart_quantity <= 1"
                       @click="removeOne(item)"
                     >
                       <i class="pi pi-minus"></i>
                     </button>
                     <span class="quantity">{{ item.cart_quantity }}</span>
-                    <button 
-                      class="qty-btn" 
-                      :disabled="updating || item.cart_quantity >= item.quantity"
+                    <button
+                      class="qty-btn"
+                      :disabled="
+                        updating || item.cart_quantity >= item.quantity
+                      "
                       @click="addOne(item)"
                     >
                       <i class="pi pi-plus"></i>
                     </button>
                   </div>
-                  
-                  <button class="remove-btn" @click="removeItem(item)" :disabled="updating">
+
+                  <button
+                    class="remove-btn"
+                    @click="removeItem(item)"
+                    :disabled="updating"
+                  >
                     <i class="pi pi-trash"></i>
                   </button>
                 </div>
-                
+
                 <div v-if="item.quantity < 10" class="stock-warning">
                   Only {{ item.quantity }} left in stock
                 </div>
               </div>
             </div>
-            
+
             <div class="cart-actions">
-              <button class="clear-cart-btn" @click="clearCart" :disabled="updating">
+              <button
+                class="clear-cart-btn"
+                @click="clearCart"
+                :disabled="updating"
+              >
                 <i class="pi pi-trash"></i>
                 Clear Cart
               </button>
@@ -394,44 +447,73 @@ export default {
                 <div class="info-row">
                   <div class="info-field">
                     <label>First Name *</label>
-                    <InputText v-model="customerInfo.firstName" placeholder="John" />
+                    <InputText
+                      v-model="customerInfo.firstName"
+                      placeholder="John"
+                    />
                   </div>
                   <div class="info-field">
                     <label>Last Name *</label>
-                    <InputText v-model="customerInfo.lastName" placeholder="Doe" />
+                    <InputText
+                      v-model="customerInfo.lastName"
+                      placeholder="Doe"
+                    />
                   </div>
                 </div>
                 <div class="info-row">
                   <div class="info-field">
                     <label>Email *</label>
-                    <InputText v-model="customerInfo.email" type="email" placeholder="john@example.com" />
+                    <InputText
+                      v-model="customerInfo.email"
+                      type="email"
+                      placeholder="john@example.com"
+                    />
                   </div>
                   <div class="info-field">
                     <label>Phone *</label>
-                    <InputText v-model="customerInfo.phone" placeholder="081 234 5678" />
+                    <InputText
+                      v-model="customerInfo.phone"
+                      placeholder="081 234 5678"
+                    />
                   </div>
                 </div>
                 <div class="info-field full-width">
                   <label>Street Address *</label>
-                  <InputText v-model="customerInfo.address" placeholder="123 Main Street" />
+                  <InputText
+                    v-model="customerInfo.address"
+                    placeholder="123 Main Street"
+                  />
                 </div>
-                <div class="info-row">
+                <div class="info-row info-row--triple">
                   <div class="info-field">
                     <label>City *</label>
-                    <InputText v-model="customerInfo.city" placeholder="Johannesburg" />
+                    <InputText
+                      v-model="customerInfo.city"
+                      placeholder="Johannesburg"
+                    />
                   </div>
                   <div class="info-field">
                     <label>Province *</label>
-                    <Select v-model="customerInfo.province" :options="provinces" placeholder="Select Province" />
+                    <Select
+                      v-model="customerInfo.province"
+                      :options="provinces"
+                      placeholder="Select Province"
+                    />
                   </div>
                   <div class="info-field">
                     <label>Postal Code *</label>
-                    <InputText v-model="customerInfo.postalCode" placeholder="2000" />
+                    <InputText
+                      v-model="customerInfo.postalCode"
+                      placeholder="2000"
+                    />
                   </div>
                 </div>
                 <div class="info-field full-width">
                   <label>Delivery Instructions (Optional)</label>
-                  <InputText v-model="customerInfo.deliveryInstructions" placeholder="Gate code, special instructions" />
+                  <InputText
+                    v-model="customerInfo.deliveryInstructions"
+                    placeholder="Gate code, special instructions"
+                  />
                 </div>
               </div>
             </template>
@@ -441,8 +523,15 @@ export default {
             <template #title><h2>Payment Method</h2></template>
             <template #content>
               <div class="payment-methods">
-                <div class="payment-option" :class="{ selected: paymentMethod === 'payfast' }">
-                  <RadioButton v-model="paymentMethod" inputId="payfast" value="payfast" />
+                <div
+                  class="payment-option"
+                  :class="{ selected: paymentMethod === 'payfast' }"
+                >
+                  <RadioButton
+                    v-model="paymentMethod"
+                    inputId="payfast"
+                    value="payfast"
+                  />
                   <label for="payfast" class="payment-label">
                     <span class="payment-name">PayFast</span>
                     <span class="payment-badge">Recommended</span>
@@ -457,11 +546,21 @@ export default {
                   <h4>Test Mode Information</h4>
                   <p>Use these test cards:</p>
                   <ul>
-                    <li><strong>Visa:</strong> 4000 0000 0000 0002, CVV: 123, Expiry: 12/25</li>
-                    <li><strong>Mastercard:</strong> 5300 0000 0000 0001, CVV: 123, Expiry: 12/25</li>
-                    <li><strong>Instant EFT:</strong> Select FNB, any credentials</li>
+                    <li>
+                      <strong>Visa:</strong> 4000 0000 0000 0002, CVV: 123,
+                      Expiry: 12/25
+                    </li>
+                    <li>
+                      <strong>Mastercard:</strong> 5300 0000 0000 0001, CVV:
+                      123, Expiry: 12/25
+                    </li>
+                    <li>
+                      <strong>Instant EFT:</strong> Select FNB, any credentials
+                    </li>
                   </ul>
-                  <p class="test-note">Test environment - no real money charged</p>
+                  <p class="test-note">
+                    Test environment - no real money charged
+                  </p>
                 </div>
               </div>
             </template>
@@ -471,16 +570,22 @@ export default {
         <div class="order-sidebar">
           <div class="summary-card">
             <h2>Order Summary</h2>
-            
+
             <div class="summary-items">
-              <div v-for="item in cartItems" :key="item.product_id" class="summary-item">
+              <div
+                v-for="item in cartItems"
+                :key="item.product_id"
+                class="summary-item"
+              >
                 <span>{{ item.product_name }} x{{ item.cart_quantity }}</span>
-                <span>{{ formatPrice(item.product_price * item.cart_quantity) }}</span>
+                <span>{{
+                  formatPrice(item.product_price * item.cart_quantity)
+                }}</span>
               </div>
             </div>
-            
+
             <div class="summary-divider"></div>
-            
+
             <div class="summary-row">
               <span>Subtotal</span>
               <span>{{ formatPrice(cartTotal) }}</span>
@@ -493,23 +598,25 @@ export default {
               <span>VAT (15%)</span>
               <span>{{ formatPrice(cartTotal * 0.15) }}</span>
             </div>
-            
+
             <div class="summary-divider"></div>
-            
+
             <div class="summary-total">
               <span>Total (ZAR)</span>
-              <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
+              <span class="total-amount">{{
+                formatPrice(cartTotal * 1.15)
+              }}</span>
             </div>
-            
-            <button 
-              class="checkout-btn" 
+
+            <button
+              class="checkout-btn"
               :disabled="processingPayment"
               @click="openConfirmDialog"
             >
               <i class="pi pi-lock"></i>
-              {{ processingPayment ? 'Processing...' : 'Proceed to Checkout' }}
+              {{ processingPayment ? "Processing..." : "Proceed to Checkout" }}
             </button>
-            
+
             <div class="secure-badge">
               <i class="pi pi-shield"></i>
               <span>Secured by PayFast</span>
@@ -519,7 +626,11 @@ export default {
       </div>
     </div>
 
-    <div v-if="showConfirmDialog" class="modal-overlay" @click="showConfirmDialog = false">
+    <div
+      v-if="showConfirmDialog"
+      class="modal-overlay"
+      @click="showConfirmDialog = false"
+    >
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>Confirm Your Order</h3>
@@ -527,7 +638,7 @@ export default {
             <i class="pi pi-times"></i>
           </button>
         </div>
-        
+
         <div class="modal-body">
           <div class="order-summary-mini">
             <h4>Order Summary</h4>
@@ -545,40 +656,42 @@ export default {
             </div>
             <div class="summary-mini-row total">
               <span>Total to Pay:</span>
-              <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
+              <span class="total-amount">{{
+                formatPrice(cartTotal * 1.15)
+              }}</span>
             </div>
           </div>
-          
+
           <div class="delivery-summary">
             <h4>Deliver to:</h4>
             <p>{{ customerInfo.firstName }} {{ customerInfo.lastName }}</p>
             <p>{{ customerInfo.address }}</p>
-            <p>{{ customerInfo.city }}, {{ customerInfo.province }} {{ customerInfo.postalCode }}</p>
+            <p>
+              {{ customerInfo.city }}, {{ customerInfo.province }}
+              {{ customerInfo.postalCode }}
+            </p>
           </div>
-          
+
           <div class="terms-checkbox">
-            <input 
-              type="checkbox" 
-              id="terms" 
-              v-model="termsAccepted"
-            />
+            <input type="checkbox" id="terms" v-model="termsAccepted" />
             <label for="terms">
-              I confirm my order details are correct and agree to the terms and conditions.
+              I confirm my order details are correct and agree to the terms and
+              conditions.
             </label>
           </div>
         </div>
-        
+
         <div class="modal-footer">
           <button class="cancel-btn" @click="showConfirmDialog = false">
             Cancel
           </button>
-          <button 
-            class="confirm-btn" 
-            @click="processPayment" 
+          <button
+            class="confirm-btn"
+            @click="processPayment"
             :disabled="!termsAccepted || processingPayment"
           >
             <i class="pi pi-lock"></i>
-            {{ processingPayment ? 'Processing...' : 'Confirm & Pay Now' }}
+            {{ processingPayment ? "Processing..." : "Confirm & Pay Now" }}
           </button>
         </div>
       </div>
@@ -733,7 +846,7 @@ export default {
 }
 
 .item-image img {
-  width: 100%;  /* Changed from 30% to 100% */
+  width: 100%; /* Changed from 30% to 100% */
   height: 100%; /* Changed from 30% to 100% */
   object-fit: cover;
 }
@@ -862,60 +975,153 @@ export default {
   cursor: not-allowed;
 }
 
-.info-section {
-  background: white;
+.info-card,
+.payment-card {
   border-radius: 12px;
-  padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.info-section h2 {
-  margin: 0 0 1.5rem;
+.info-card :deep(.p-card-body),
+.payment-card :deep(.p-card-body) {
+  padding: 1.5rem;
+}
+
+.info-card :deep(.p-card-title h2),
+.payment-card :deep(.p-card-title h2) {
+  margin: 0;
   color: #2d3748;
   font-size: 1.25rem;
 }
 
-.info-form {
+.info-grid {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.form-row {
+.info-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
-.form-group {
+.info-row--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.info-field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.form-group.full-width {
-  grid-column: 1 / -1;
+.info-field.full-width {
+  width: 100%;
 }
 
-.form-group label {
-  font-size: 0.8rem;
+.info-field label {
+  font-size: 0.85rem;
   font-weight: 600;
   color: #4a5568;
 }
 
-.form-group input,
-.form-group select {
-  padding: 0.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: all 0.3s;
+.info-field :deep(.p-inputtext),
+.info-field :deep(.p-select) {
+  width: 100%;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  background: #fff;
+}
+
+.payment-option.selected {
   border-color: #8b4513;
+  box-shadow: 0 0 0 1px rgba(139, 69, 19, 0.18);
+  background: #fffaf5;
+}
+
+.payment-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1;
+  cursor: pointer;
+}
+
+.payment-name {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.payment-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8b4513;
+  background: rgba(139, 69, 19, 0.12);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+.payment-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.payfast-icon {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0f766e;
+  border: 1px solid rgba(15, 118, 110, 0.25);
+  border-radius: 999px;
+  padding: 0.16rem 0.4rem;
+}
+
+.test-info {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.test-info h4 {
+  margin: 0 0 0.45rem;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.test-info p {
+  margin: 0.35rem 0;
+  color: #4a5568;
+  font-size: 0.86rem;
+}
+
+.test-info ul {
+  margin: 0.35rem 0 0.25rem 1rem;
+  padding: 0;
+  color: #4a5568;
+  font-size: 0.82rem;
+}
+
+.test-note {
+  color: #8b4513;
+  font-weight: 600;
 }
 
 .order-sidebar {
@@ -1197,7 +1403,7 @@ export default {
   .cart-with-items {
     grid-template-columns: 1fr;
   }
-  
+
   .order-sidebar {
     position: static;
   }
@@ -1207,16 +1413,17 @@ export default {
   .cart-view {
     padding: 1rem;
   }
-  
+
   .cart-header {
     flex-direction: column;
     text-align: center;
   }
-  
-  .form-row {
+
+  .info-row,
+  .info-row--triple {
     grid-template-columns: 1fr;
   }
-  
+
   .cart-item {
     flex-direction: column;
   }

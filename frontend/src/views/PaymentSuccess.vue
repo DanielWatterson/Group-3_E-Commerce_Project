@@ -1,10 +1,10 @@
-<script setup>
-import { useRouter, useRoute } from 'vue-router';
-import { useStore } from 'vuex';
-import { onMounted, ref } from 'vue';
-import axios from 'axios';
-import Button from 'primevue/button';
-import Card from 'primevue/card';
+ï»¿<script setup>
+import { useRouter, useRoute } from "vue-router";
+import { useStore } from "vuex";
+import { onMounted, ref } from "vue";
+import axios from "axios";
+import Button from "primevue/button";
+import Card from "primevue/card";
 
 const router = useRouter();
 const route = useRoute();
@@ -13,26 +13,113 @@ const store = useStore();
 const checkingStatus = ref(true);
 const paymentConfirmed = ref(false);
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
+const verifyAttempts = 12;
+const verifyDelayMs = 2500;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getPendingOrder() {
+  try {
+    const raw = localStorage.getItem("pendingOrder");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingCartData() {
+  store.dispatch("clearCart");
+  localStorage.removeItem("pendingOrder");
+}
+
+function resolvePaymentId() {
+  const directId = Number(route.query.payment_id);
+  if (Number.isInteger(directId) && directId > 0) {
+    return directId;
+  }
+
+  const pendingOrder = getPendingOrder();
+  const pendingId = Number(pendingOrder?.payment_id);
+  return Number.isInteger(pendingId) && pendingId > 0 ? pendingId : null;
+}
+
+async function fetchPaymentStatus(paymentId) {
+  const { data } = await axios.get(`${apiBaseUrl}/payments/${paymentId}`);
+  return String(data?.payment_status || "").toLowerCase();
+}
+
+async function waitForCompletedStatus(paymentId) {
+  for (let attempt = 1; attempt <= verifyAttempts; attempt += 1) {
+    const status = await fetchPaymentStatus(paymentId);
+
+    if (status === "completed") {
+      return true;
+    }
+
+    if (status === "failed") {
+      return false;
+    }
+
+    if (attempt < verifyAttempts) {
+      await sleep(verifyDelayMs);
+    }
+  }
+
+  return false;
+}
+
+async function finalizeForLocalhost(paymentId) {
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+  if (!isLocalhost) {
+    return false;
+  }
+
+  try {
+    await axios.patch(`${apiBaseUrl}/payments/${paymentId}`, {
+      payment_status: "completed",
+    });
+    return true;
+  } catch (error) {
+    console.warn("Localhost fallback finalization failed:", error);
+    return false;
+  }
+}
 
 onMounted(async () => {
-  const paymentId = Number(route.query.payment_id);
+  const paymentId = resolvePaymentId();
 
-  if (!Number.isInteger(paymentId) || paymentId <= 0) {
+  if (!paymentId) {
     checkingStatus.value = false;
     return;
   }
 
   try {
-    const { data } = await axios.get(`${apiBaseUrl}/payments/${paymentId}`);
+    const queryStatus = String(route.query.payment_status || "").toUpperCase();
 
-    if (data?.payment_status === 'completed') {
+    if (queryStatus === "COMPLETE") {
       paymentConfirmed.value = true;
-      store.dispatch('clearCart');
-      localStorage.removeItem('pendingOrder');
+      clearPendingCartData();
+      return;
+    }
+
+    const verified = await waitForCompletedStatus(paymentId);
+    if (verified) {
+      paymentConfirmed.value = true;
+      clearPendingCartData();
+      return;
+    }
+
+    // In local dev, ITN callbacks usually cannot reach localhost.
+    // Fallback to finalize after a successful return redirect.
+    const localFinalized = await finalizeForLocalhost(paymentId);
+    if (localFinalized) {
+      paymentConfirmed.value = true;
+      clearPendingCartData();
     }
   } catch (error) {
-    console.error('Payment verification failed:', error);
+    console.error("Payment verification failed:", error);
   } finally {
     checkingStatus.value = false;
   }
@@ -44,24 +131,36 @@ onMounted(async () => {
     <Card class="status-card">
       <template #content>
         <div class="status-content">
-          <div :class="paymentConfirmed ? 'success-icon' : 'pending-icon'">{{ paymentConfirmed ? '?' : '…' }}</div>
-          <h1>{{ paymentConfirmed ? 'Payment Successful!' : 'Payment Verification Pending' }}</h1>
+          <div :class="paymentConfirmed ? 'success-icon' : 'pending-icon'">
+            {{ paymentConfirmed ? "OK" : "..." }}
+          </div>
+          <h1>
+            {{ paymentConfirmed ? "Payment Successful!" : "Payment Verification Pending" }}
+          </h1>
 
           <p v-if="checkingStatus">Checking your payment status...</p>
-          <p v-else-if="paymentConfirmed">Thank you for your purchase. Your order has been confirmed.</p>
+          <p v-else-if="paymentConfirmed">
+            Thank you for your purchase. Your order has been confirmed.
+          </p>
           <p v-else>
             We could not confirm payment yet. If you completed payment, please refresh shortly or contact support.
           </p>
 
           <p class="order-info">
-            {{ paymentConfirmed ? 'A confirmation email has been sent to your email address.' : 'Your cart was not cleared.' }}
+            {{ paymentConfirmed ? "A confirmation email has been sent to your email address." : "Your cart was not cleared." }}
           </p>
 
           <div class="status-actions">
             <Button label="Continue Shopping" @click="router.push('/products')" />
             <Button
               v-if="!paymentConfirmed"
-              label="Return to Cart"
+              label="Refresh Status"
+              class="p-button-outlined"
+              @click="router.go(0)"
+            />
+            <Button
+              v-if="!paymentConfirmed"
+              label="Back to Cart"
               class="p-button-outlined"
               @click="router.push('/cart')"
             />
@@ -88,7 +187,7 @@ onMounted(async () => {
 }
 
 .status-card {
-  max-width: 500px;
+  max-width: 540px;
   border: 2px solid #e2e8f0;
   border-radius: 16px;
 }
@@ -107,7 +206,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
   margin: 0 auto 1.5rem;
   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
@@ -137,7 +237,8 @@ p {
 
 .status-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 </style>

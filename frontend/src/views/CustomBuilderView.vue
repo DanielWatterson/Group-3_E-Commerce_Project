@@ -546,7 +546,8 @@ Created with WoodCraft Workshop Builder
 
 <style scoped>
 .builder-page {
-  height: 100vh;
+  height: calc(100dvh - 72px);
+  min-height: calc(100vh - 72px);
   background: #1a1a1a;
   color: white;
   overflow: hidden;
@@ -954,6 +955,13 @@ Created with WoodCraft Workshop Builder
   
   .button-group {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .builder-page {
+    height: calc(100dvh - 64px);
+    min-height: calc(100vh - 64px);
   }
 }
 

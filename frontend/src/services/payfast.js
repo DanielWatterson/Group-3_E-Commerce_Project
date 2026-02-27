@@ -2,11 +2,15 @@ import axios from "axios";
 
 class PayFastService {
   constructor() {
-    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
+    this.apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:5050";
   }
 
   async createPaymentSession(checkoutData) {
-    const { data } = await axios.post(`${this.apiBaseUrl}/payfast/create-payment`, checkoutData);
+    const { data } = await axios.post(
+      `${this.apiBaseUrl}/payfast/create-payment`,
+      checkoutData,
+    );
     return data;
   }
 
@@ -29,11 +33,17 @@ class PayFastService {
   }
 
   redirectToPayFast(session) {
-    if (!session?.payfast_redirect_url) {
+    const redirectUrl =
+      session?.payfast_redirect_url ||
+      session?.redirect_url ||
+      session?.payment_url ||
+      session?.url;
+
+    if (!redirectUrl) {
       throw new Error("PayFast hosted URL is missing from backend response");
     }
 
-    window.location.assign(session.payfast_redirect_url);
+    window.location.assign(redirectUrl);
   }
 }
 

@@ -184,7 +184,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import PartnershipForm from '@/components/PartnershipForm.vue';
 
@@ -196,15 +196,23 @@ export default {
   setup() {
     const toast = useToast();
     const showFormOverlay = ref(false);
+    let previousBodyOverflow = '';
+
+    const restoreBodyOverflow = () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
 
     const openFormModal = () => {
+      if (!showFormOverlay.value) {
+        previousBodyOverflow = document.body.style.overflow;
+      }
       showFormOverlay.value = true;
       document.body.style.overflow = 'hidden';
     };
 
     const closeFormModal = () => {
       showFormOverlay.value = false;
-      document.body.style.overflow = 'auto';
+      restoreBodyOverflow();
     };
 
     const handleFormSubmitted = (formData) => {
@@ -213,6 +221,10 @@ export default {
         closeFormModal();
       }, 3000);
     };
+
+    onBeforeUnmount(() => {
+      restoreBodyOverflow();
+    });
 
     return {
       showFormOverlay,

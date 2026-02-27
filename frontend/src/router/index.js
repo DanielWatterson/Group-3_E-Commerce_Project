@@ -69,14 +69,17 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const isAuthenticated = store.getters.isAuthenticated;
+  const isSignupMode = to.path === "/login" && to.query?.mode === "signup";
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next("/login");
-  } else if (to.path === "/login" && isAuthenticated) {
-    next("/");
-  } else {
-    next();
+    return "/login";
   }
+
+  if (to.path === "/login" && isAuthenticated && !isSignupMode) {
+    return "/";
+  }
+
+  return true;
 });
 
 export default router;

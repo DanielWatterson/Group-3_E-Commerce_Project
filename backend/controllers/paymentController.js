@@ -102,9 +102,9 @@ const resolveCustomer = async (customer) => {
 };
 
 const createOrderWithItems = async (customerId, items) => {
-  const order = await createOrderModel(customerId, "pending");
-  const orderId = order.insertId;
+  const pendingOrderItems = [];
   const validatedItems = [];
+  let originalTotal = 0;
 
   for (const item of items) {
     const product = await getProductByIdModel(item.product_id);
@@ -122,12 +122,24 @@ const createOrderWithItems = async (customerId, items) => {
       throw createValidationError(`Insufficient stock for ${product.product_name}`);
     }
 
-    await addOrderItemModel(orderId, item.product_id, quantity);
+    pendingOrderItems.push({
+      product_id: item.product_id,
+      quantity,
+    });
+
+    originalTotal += Number(product.product_price || 0) * quantity;
 
     validatedItems.push({
       product_name: product.product_name,
       quantity,
     });
+  }
+
+  const order = await createOrderModel(customerId, originalTotal, originalTotal, 0, 0, "pending");
+  const orderId = order.insertId;
+
+  for (const item of pendingOrderItems) {
+    await addOrderItemModel(orderId, item.product_id, item.quantity);
   }
 
   return { orderId, validatedItems };
@@ -370,7 +382,7 @@ export const handlePayfastNotify = async (req, res) => {
     if (Number.isInteger(orderId) && orderId > 0) {
       const order = await getOrderByIdModel(orderId);
       if (order && order.order_status !== orderStatus) {
-        await updateOrderModel(orderId, order.customer_id, orderStatus);
+        await updateOrderModel(orderId, orderStatus);
         logPayfastItn("Order status updated", {
           orderId,
           previousOrderStatus: order.order_status,
@@ -479,6 +491,22 @@ export const updatePaymentStatus = async (req, res) => {
     }
 
     await updatePaymentStatusModel(id, payment_status);
+
+    const orderStatusByPayment = {
+      completed: "paid",
+      failed: "cancelled",
+      pending: "pending",
+    };
+    const normalizedPaymentStatus = String(payment_status || "").toLowerCase();
+    const mappedOrderStatus = orderStatusByPayment[normalizedPaymentStatus];
+
+    if (mappedOrderStatus) {
+      const order = await getOrderByIdModel(existingPayment.order_id);
+      if (order && order.order_status !== mappedOrderStatus) {
+        await updateOrderModel(existingPayment.order_id, mappedOrderStatus);
+      }
+    }
+
     const updatedPayment = await getPaymentByIdModel(id);
 
     res.json({
