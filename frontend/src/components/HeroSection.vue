@@ -102,12 +102,12 @@ export default {
 
 .pane-left {
   left: 0;
-  background-image: url("https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1640&q=80");
+  background-image: url("https://static.vecteezy.com/system/resources/previews/032/330/342/non_2x/ai-generated-natural-eco-friendly-tree-and-computer-technology-on-an-abstract-high-tech-futuristic-background-of-microchips-and-computer-circuit-boards-with-transistors-free-photo.jpg");
 }
 
 .pane-right {
   left: calc(50% + (var(--split-gap) / 2));
-  background-image: url("https://images.unsplash.com/photo-1486946255434-2466348c2166?auto=format&fit=crop&w=1640&q=80");
+  background-image: url("https://cdn.mos.cms.futurecdn.net/v2/t:0,l:504,cw:3024,ch:3024,q:80,w:2560/h5NgQEGTcUwAyBzyNJwPue.jpg");
 }
 
 .hero-overlay {
