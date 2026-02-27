@@ -1,6 +1,14 @@
 <script>
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import Button from "primevue/button";
+import Card from "primevue/card";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import Checkbox from "primevue/checkbox";
+import RadioButton from "primevue/radiobutton";
+import Toast from "primevue/toast";
+import Dialog from "primevue/dialog";
 import { useToast } from "primevue/usetoast";
 import { ref, computed } from "vue";
 import payfastService from "@/services/payfast";
@@ -379,67 +387,85 @@ export default {
             </div>
           </div>
 
-          <div class="info-section">
-            <h2>Delivery Information</h2>
-            
-            <div class="info-form">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>First Name *</label>
-                  <input v-model="customerInfo.firstName" type="text" placeholder="John" />
+          <Card class="info-card">
+            <template #title><h2>Your Information</h2></template>
+            <template #content>
+              <div class="info-grid">
+                <div class="info-row">
+                  <div class="info-field">
+                    <label>First Name *</label>
+                    <InputText v-model="customerInfo.firstName" placeholder="John" />
+                  </div>
+                  <div class="info-field">
+                    <label>Last Name *</label>
+                    <InputText v-model="customerInfo.lastName" placeholder="Doe" />
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label>Last Name *</label>
-                  <input v-model="customerInfo.lastName" type="text" placeholder="Doe" />
+                <div class="info-row">
+                  <div class="info-field">
+                    <label>Email *</label>
+                    <InputText v-model="customerInfo.email" type="email" placeholder="john@example.com" />
+                  </div>
+                  <div class="info-field">
+                    <label>Phone *</label>
+                    <InputText v-model="customerInfo.phone" placeholder="081 234 5678" />
+                  </div>
                 </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Email *</label>
-                  <input v-model="customerInfo.email" type="email" placeholder="john@example.com" />
+                <div class="info-field full-width">
+                  <label>Street Address *</label>
+                  <InputText v-model="customerInfo.address" placeholder="123 Main Street" />
                 </div>
-                <div class="form-group">
-                  <label>Phone *</label>
-                  <input v-model="customerInfo.phone" type="tel" placeholder="081 234 5678" />
+                <div class="info-row">
+                  <div class="info-field">
+                    <label>City *</label>
+                    <InputText v-model="customerInfo.city" placeholder="Johannesburg" />
+                  </div>
+                  <div class="info-field">
+                    <label>Province *</label>
+                    <Select v-model="customerInfo.province" :options="provinces" placeholder="Select Province" />
+                  </div>
+                  <div class="info-field">
+                    <label>Postal Code *</label>
+                    <InputText v-model="customerInfo.postalCode" placeholder="2000" />
+                  </div>
                 </div>
-              </div>
-              
-              <div class="form-group full-width">
-                <label>Street Address *</label>
-                <input v-model="customerInfo.address" type="text" placeholder="123 Main Street" />
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>City *</label>
-                  <input v-model="customerInfo.city" type="text" placeholder="Johannesburg" />
-                </div>
-                <div class="form-group">
-                  <label>Province *</label>
-                  <select v-model="customerInfo.province">
-                    <option value="" disabled>Select Province</option>
-                    <option v-for="province in provinces" :key="province" :value="province">
-                      {{ province }}
-                    </option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Postal Code *</label>
-                  <input v-model="customerInfo.postalCode" type="text" placeholder="2000" />
+                <div class="info-field full-width">
+                  <label>Delivery Instructions (Optional)</label>
+                  <InputText v-model="customerInfo.deliveryInstructions" placeholder="Gate code, special instructions" />
                 </div>
               </div>
-              
-              <div class="form-group full-width">
-                <label>Delivery Instructions (Optional)</label>
-                <input 
-                  v-model="customerInfo.deliveryInstructions" 
-                  type="text" 
-                  placeholder="Gate code, special instructions" 
-                />
+            </template>
+          </Card>
+
+          <Card class="payment-card">
+            <template #title><h2>Payment Method</h2></template>
+            <template #content>
+              <div class="payment-methods">
+                <div class="payment-option" :class="{ selected: paymentMethod === 'payfast' }">
+                  <RadioButton v-model="paymentMethod" inputId="payfast" value="payfast" />
+                  <label for="payfast" class="payment-label">
+                    <span class="payment-name">PayFast</span>
+                    <span class="payment-badge">Recommended</span>
+                  </label>
+                  <div class="payment-icons">
+                    <i class="pi pi-credit-card"></i>
+                    <i class="pi pi-paypal"></i>
+                    <span class="payfast-icon">EFT</span>
+                  </div>
+                </div>
+                <div class="test-info">
+                  <h4>Test Mode Information</h4>
+                  <p>Use these test cards:</p>
+                  <ul>
+                    <li><strong>Visa:</strong> 4000 0000 0000 0002, CVV: 123, Expiry: 12/25</li>
+                    <li><strong>Mastercard:</strong> 5300 0000 0000 0001, CVV: 123, Expiry: 12/25</li>
+                    <li><strong>Instant EFT:</strong> Select FNB, any credentials</li>
+                  </ul>
+                  <p class="test-note">Test environment - no real money charged</p>
+                </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </Card>
         </div>
 
         <div class="order-sidebar">

@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Steps from 'primevue/steps';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -246,7 +246,7 @@ export default {
                 </div>
                 <div class="field">
                   <label>Province *</label>
-                  <Dropdown 
+                  <Select 
                     v-model="formData.province" 
                     :options="provinces" 
                     placeholder="Select Province" 

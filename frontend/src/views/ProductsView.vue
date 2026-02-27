@@ -232,7 +232,7 @@ export default {
             />
           </span>
           
-          <Dropdown 
+          <Select 
             v-model="selectedCategory" 
             :options="categories" 
             optionLabel="name" 
@@ -241,7 +241,7 @@ export default {
             class="category-dropdown"
           />
           
-          <Dropdown 
+          <Select 
             v-model="selectedSort" 
             :options="sortOptions" 
             optionLabel="name" 

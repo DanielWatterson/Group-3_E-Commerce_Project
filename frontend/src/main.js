@@ -17,7 +17,7 @@ import Menubar from 'primevue/menubar'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import InputNumber from 'primevue/inputnumber'
 import Tag from 'primevue/tag'
@@ -46,7 +46,7 @@ app.component('Menubar', Menubar)
 app.component('Button', Button)
 app.component('Card', Card)
 app.component('InputText', InputText)
-app.component('Dropdown', Dropdown)
+app.component('Select', Select)
 app.component('Dialog', Dialog)
 app.component('InputNumber', InputNumber)
 app.component('Tag', Tag)
