@@ -38,17 +38,18 @@ VALUES ('Ian', 'ianskywalker22@gmail.com', '@walker0fTh3$ky');
 
 INSERT INTO `e_commerce`.`products` (`product_name`, `product_price`, `quantity`, `image_url`, `has_warranty`, `warranty_period_months`) 
 VALUES
-('Basic Wooden Desk', 2999.99, 75, 'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp', TRUE, 12),
-('Standard Wooden Desk', 3999.99, 50, 'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg', TRUE, 12),
-('Premium Wooden Desk', 4999.99, 0, 'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg', TRUE, 24),
-('Deluxe Wooden Desk', 5999.99, 40, 'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg', TRUE, 24),
-('Custom Desk - Entry', 2999.99, 35, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', FALSE, NULL),
-('Custom Desk - Basic', 3999.99, 30, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', FALSE, NULL),
-('Custom Desk - Plus', 4999.99, 25, 'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png', TRUE, 12),
-('Custom Desk - Pro', 5999.99, 20, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 12),
-('Custom Desk - Elite', 6999.99, 15, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 24),
-('Custom Desk - Premium', 7999.99, 5, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 24),
-('Custom Desk - Luxury', 8999.99, 20, 'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png', TRUE, 36);
+('Standard Wooden Desk - Everyday Ready', 1999.99, 50, 'https://i.postimg.cc/WpZcmGy7/cleaned-Generated-Image-September-25-2025-2-45PM-1.webp', TRUE, 12),
+('Premium Wooden Desk - Office Ready', 2499.99, 0, 'https://i.postimg.cc/65NJM7s0/Maluti-Lshape-desk-02.jpg', TRUE, 24),
+('Deluxe Wooden Desk - Gaming Ready', 4649.99, 40, 'https://i.postimg.cc/gchbyV7H/sa301e109aeb9462384c4e91da0ab1c383-500x500.webp', TRUE, 24),
+('Wooden Coasters 4set', 299.99, 100, 'https://i.postimg.cc/N0ndTHY2/Kanso-Nat-Ash-Wd-Cstrs-S4AVSSF24-web-pdp-main-carousel-med.jpg', FALSE, NULL),
+('Small Wooden Statuette', 199.99, 20, 'https://i.postimg.cc/25Z2X079/animals-wooden-figurines-handmade-animal-260nw-2259268799.jpg', FALSE, NULL),
+('Medium Wooden Statuette', 499.99, 10, 'https://i.postimg.cc/TwvC8ntj/handmade-wooden-figurine-on-black-260nw-2291672301.jpg', TRUE, 6),
+('Large Wooden Statuette', 954.99, 7, 'https://i.postimg.cc/zvZRYJwK/il-fullxfull-6542577593-bmuv.jpg', TRUE, 12),
+('Wooden tableware collection', 84.99, 60, 'https://i.postimg.cc/63xYsCMd/collection-wooden-tableware-including-plate-260nw-2698937855-(1).jpg', FALSE, NULL),
+('Wooden Cutting Board', 109.99, 80, 'https://i.postimg.cc/zfr06ntk/360-F-348145814-uhi0Hau-E2L6df-O4KRq-Ajgne4TCfj7Acr.jpg', FALSE, NULL),
+('Standard Wooden Table', 1499.99, 50, 'https://i.postimg.cc/5ydpKW6T/wooden-table-20792188.jpg', TRUE, 24),
+('Standard Wooden Chair', 499.99, 120, 'https://i.postimg.cc/k4PfrWTv/wooden-cross-back-chair-260nw-2683424195.jpg', TRUE, 24),
+('Standard Wooden Bench', 8999.99, 50, 'https://i.postimg.cc/4dRBCpWb/beautiful-wooden-decorative-bench-city-260nw-2301571797.jpg', TRUE, 36);
 
 CREATE TABLE orders (
   order_id INT AUTO_INCREMENT PRIMARY KEY,

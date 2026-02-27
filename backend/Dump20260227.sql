@@ -94,7 +94,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-26 12:43:52'),(2,2,3,1,'2026-02-26 12:43:52'),(3,3,5,1,'2026-02-26 12:43:52');
+INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-27 10:45:21'),(2,2,3,1,'2026-02-27 10:45:21'),(3,3,5,1,'2026-02-27 10:45:21');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -126,7 +126,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,35.00,2800.00,'2026-02-26 12:43:52'),(2,2,'pending',4999.99,3999.99,20.00,1000.00,'2026-02-26 12:43:52'),(3,3,'paid',2999.99,2549.99,15.00,450.00,'2026-02-26 12:43:52');
+INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,35.00,2800.00,'2026-02-27 10:45:21'),(2,2,'pending',4999.99,3999.99,20.00,1000.00,'2026-02-27 10:45:21'),(3,3,'paid',2999.99,2549.99,15.00,450.00,'2026-02-27 10:45:21');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -159,7 +159,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed',NULL,NULL,NULL,'2026-02-26 12:43:52'),(2,2,4999.99,'paypal','pending',NULL,NULL,NULL,'2026-02-26 12:43:52'),(3,3,2999.99,'credit_card','failed','1',2999.99,'pending','2026-02-26 12:43:52');
+INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed',NULL,NULL,NULL,'2026-02-27 10:45:21'),(2,2,4999.99,'paypal','pending',NULL,NULL,NULL,'2026-02-27 10:45:21'),(3,3,2999.99,'credit_card','failed','1',2999.99,'pending','2026-02-27 10:45:21');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -185,7 +185,7 @@ CREATE TABLE `products` (
   CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0)),
   CONSTRAINT `chk_stock_alert` CHECK ((`quantity` >= 0)),
   CONSTRAINT `chk_warranty_period` CHECK ((`warranty_period_months` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -194,7 +194,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp',1,12,1,NULL),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg',1,12,1,NULL),(3,'Premium Wooden Desk',4999.99,0,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg',1,24,1,NULL),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg',1,24,1,NULL),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',1,12,1,NULL),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,12,1,NULL),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(10,'Custom Desk - Premium',7999.99,5,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,36,1,NULL);
+INSERT INTO `products` VALUES (1,'Standard Wooden Desk - Everyday Ready',1999.99,50,'https://i.postimg.cc/WpZcmGy7/cleaned-Generated-Image-September-25-2025-2-45PM-1.webp',1,12,1,NULL),(2,'Premium Wooden Desk - Office Ready',2499.99,0,'https://i.postimg.cc/65NJM7s0/Maluti-Lshape-desk-02.jpg',1,24,1,NULL),(3,'Deluxe Wooden Desk - Gaming Ready',4649.99,40,'https://i.postimg.cc/gchbyV7H/sa301e109aeb9462384c4e91da0ab1c383-500x500.webp',1,24,1,NULL),(4,'Wooden Coasters 4set',299.99,100,'https://i.postimg.cc/N0ndTHY2/Kanso-Nat-Ash-Wd-Cstrs-S4AVSSF24-web-pdp-main-carousel-med.jpg',0,NULL,1,NULL),(5,'Small Wooden Statuette',199.99,20,'https://i.postimg.cc/25Z2X079/animals-wooden-figurines-handmade-animal-260nw-2259268799.jpg',0,NULL,1,NULL),(6,'Medium Wooden Statuette',499.99,10,'https://i.postimg.cc/TwvC8ntj/handmade-wooden-figurine-on-black-260nw-2291672301.jpg',1,6,1,NULL),(7,'Large Wooden Statuette',954.99,7,'https://i.postimg.cc/zvZRYJwK/il-fullxfull-6542577593-bmuv.jpg',1,12,1,NULL),(8,'Wooden tableware collection',84.99,60,'https://i.postimg.cc/63xYsCMd/collection-wooden-tableware-including-plate-260nw-2698937855-(1).jpg',0,NULL,1,NULL),(9,'Wooden Cutting Board',109.99,80,'https://i.postimg.cc/zfr06ntk/360-F-348145814-uhi0Hau-E2L6df-O4KRq-Ajgne4TCfj7Acr.jpg',0,NULL,1,NULL),(10,'Standard Wooden Table',1499.99,50,'https://i.postimg.cc/5ydpKW6T/wooden-table-20792188.jpg',1,24,1,NULL),(11,'Standard Wooden Chair',499.99,120,'https://i.postimg.cc/k4PfrWTv/wooden-cross-back-chair-260nw-2683424195.jpg',1,24,1,NULL),(12,'Standard Wooden Bench',8999.99,50,'https://i.postimg.cc/4dRBCpWb/beautiful-wooden-decorative-bench-city-260nw-2301571797.jpg',1,36,1,NULL);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -225,4 +225,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-26 12:47:29
+-- Dump completed on 2026-02-27 10:47:41

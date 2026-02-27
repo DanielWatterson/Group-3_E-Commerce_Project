@@ -40,8 +40,8 @@ export default {
     
     const categories = ref([
       { name: 'All Products', value: null },
-      { name: 'Wooden Desks', value: 'Wooden' },
-      { name: 'Custom Desks', value: 'Custom' },
+      { name: 'Desk', value: 'desk' },
+      { name: 'Tableware', value: 'tableware' },
 
     ]);
 
@@ -51,7 +51,6 @@ export default {
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
       { name: 'Stock (Low to High)', value: 'stock_asc' },
-      { name: 'Stock (High to Low)', value: 'stock_desc' }
     ]);
     
     const selectedSort = ref('name_asc');
@@ -392,7 +391,7 @@ const addToCart = async (product) => {
       {{ cartCount }}
     </span>
   </button>
-                              </div>
+ </div>
                   </div>
                 </div>
 
@@ -444,7 +443,6 @@ const addToCart = async (product) => {
           
           <div class="product-header">
             <h3 class="product-name">{{ product.product_name }}</h3>
-            <span class="product-id">#{{ product.product_id }}</span>
           </div>
           
           <div class="product-details">
@@ -467,6 +465,24 @@ const addToCart = async (product) => {
               class="buy-btn"
               :class="{ 'p-button-outlined': product.quantity === 0 }"
             />
+
+            <!-- Description Toggle -->
+<button
+  class="btn btn-sm btn-outline-secondary w-100 mb-2"
+  data-bs-toggle="collapse"
+  :data-bs-target="`#desc-${product.product_id}`"
+  aria-expanded="false"
+>
+  View Description
+</button>
+
+<!-- Product Description Dropdown -->
+<details class="product-description">
+  <summary>View Description</summary>
+  <p>
+    {{ product.description || 'No description available.' }}
+  </p>
+</details>
           </div>
         </div>
       </div>
@@ -554,6 +570,51 @@ const addToCart = async (product) => {
   background-attachment: fixed;
   background-repeat: no-repeat;
   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Product description dropdown */
+.product-description {
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Remove default marker */
+.product-description summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7c6a2d;
+  list-style: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Custom arrow */
+.product-description summary::after {
+  content: "▾";
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+/* Rotate arrow when open */
+.product-description[open] summary::after {
+  transform: rotate(180deg);
+}
+
+/* Hide default disclosure triangle */
+.product-description summary::-webkit-details-marker {
+  display: none;
+}
+
+.product-description p {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
 }
 
 .content-card,
@@ -748,7 +809,7 @@ const addToCart = async (product) => {
 }
 
 .product-image {
-  width: 90%;
+  width: 100%;
   height: 250px;              /* HARD LIMIT */
   border-radius: 8px;
   overflow: hidden;
