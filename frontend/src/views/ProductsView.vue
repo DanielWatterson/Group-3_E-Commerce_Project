@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import axios from 'axios';
 
 export default {
   name: "ProductsView",
@@ -10,32 +11,36 @@ export default {
     const store = useStore();
     const router = useRouter();
     const toast = useToast();
-    
+
+    const handleImageError = (event) => {
+      event.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+    };
+
     const products = computed(() => store.state.products || []);
     const isAuthenticated = computed(() => store.getters.isAuthenticated);
     const cartCount = computed(() => store.getters.cartCount);
     
+    const backgroundStyle = computed(() => ({
+      backgroundImage: "url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      minHeight: '100vh'
+    }));
+    
     const loading = ref(false);
     const searchQuery = ref('');
-    const selectedCategory = ref('all');
+    const selectedCategory = ref(null);
+    const productDialog = ref(false);
+    const deleteDialog = ref(false);
+    const product = ref({});
+    const submitted = ref(false);
+    const editingProduct = ref(null);
     
     const categories = ref([
-<<<<<<< HEAD
-      { name: 'All Products', value: 'all' },
-      { name: 'Desks', value: 'desk' },
-      { name: 'Chairs', value: 'chair' },
-      { name: 'Tables', value: 'table' },
-      { name: 'Benches', value: 'bench' },
-      { name: 'Statues', value: 'statuette' },
-      { name: 'Kitchen', value: 'kitchen' },
-      { name: 'Accessories', value: 'accessories' },
-      { name: 'Decor', value: 'decor' }
-=======
       { name: 'All Products', value: null },
       { name: 'Desk', value: 'desk' },
       { name: 'Tableware', value: 'tableware' },
-
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
     ]);
 
     const sortOptions = ref([
@@ -43,11 +48,7 @@ export default {
       { name: 'Name (Z-A)', value: 'name_desc' },
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
-<<<<<<< HEAD
-      { name: 'Stock (Low to High)', value: 'stock_asc' }
-=======
       { name: 'Stock (Low to High)', value: 'stock_asc' },
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
     ]);
     
     const selectedSort = ref('name_asc');
@@ -55,15 +56,15 @@ export default {
     const filteredProducts = computed(() => {
       let filtered = products.value;
       
-      if (selectedCategory.value && selectedCategory.value !== 'all') {
-        filtered = filtered.filter(p => 
-          p.product_name && p.product_name.toLowerCase().includes(selectedCategory.value.toLowerCase())
-        );
-      }
-      
       if (searchQuery.value) {
         filtered = filtered.filter(p => 
           p.product_name && p.product_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        );
+      }
+      
+      if (selectedCategory.value) {
+        filtered = filtered.filter(p => 
+          p.product_name && p.product_name.toLowerCase().includes(selectedCategory.value.toLowerCase())
         );
       }
       
@@ -84,7 +85,7 @@ export default {
         }
       });
       
-      return filtered;
+      return filtered; 
     });
 
     const loadProducts = async () => {
@@ -99,51 +100,70 @@ export default {
       }
     };
 
-    const addToCart = (product) => {
+    const addToCart = async (product) => {
+      console.log('🔵 ADD TO CART CLICKED', product);
+      
       if (!isAuthenticated.value) {
-        toast.add({ 
-          severity: 'warn', 
-          summary: 'Login Required', 
-          detail: 'Please login to add items to cart', 
-          life: 3000 
-        });
-        sessionStorage.setItem('redirectAfterLogin', '/cart');
-        setTimeout(() => router.push('/login'), 2000);
+        console.log('🔴 User not authenticated');
+        toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
+        router.push('/login');
         return;
       }
       
       if (product.quantity <= 0) {
-        toast.add({ 
-          severity: 'error', 
-          summary: 'Out of Stock', 
-          detail: `${product.product_name} is out of stock`, 
-          life: 3000 
-        });
+        console.log('🔴 Product out of stock');
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
         return;
       }
       
-      store.dispatch('addToCart', product);
-      toast.add({ 
-        severity: 'success', 
-        summary: 'Added to Cart', 
-        detail: `${product.product_name} added to cart`, 
-        life: 2000 
-      });
+      try {
+        console.log('🟡 Sending PATCH request to:', `http://localhost:5050/products/${product.product_id}/decrease-stock`);
+        console.log('🟡 Request body:', { quantity: 1 });
+        
+        const response = await axios.patch(`http://localhost:5050/products/${product.product_id}/decrease-stock`, {
+          quantity: 1
+        });
+        
+        console.log('🟢 PATCH response:', response.data);
+        
+        console.log('🟡 Dispatching to cart store');
+        store.dispatch('addToCart', product);
+        
+        const productIndex = products.value.findIndex(p => p.product_id === product.product_id);
+        if (productIndex !== -1) {
+          const updatedProducts = [...products.value];
+          updatedProducts[productIndex] = {
+            ...updatedProducts[productIndex],
+            quantity: updatedProducts[productIndex].quantity - 1
+          };
+          store.state.products = updatedProducts;
+        }
+        
+        toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
+      } catch (error) {
+        console.error('🔴 ERROR in addToCart:', error);
+        console.log('🔴 Error response:', error.response?.data);
+        
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: error.response?.data?.error || error.message || 'Failed to add to cart', 
+          life: 3000 
+        });
+      }
     };
 
-    const goToCart = () => router.push('/cart');
-
     const getStockStatus = (quantity) => {
-      if (quantity <= 0) return 'OUTOFSTOCK';
-      if (quantity < 10) return 'LOWSTOCK';
-      return 'INSTOCK';
+      if (quantity <= 0) return 'OUT OF STOCK';
+      if (quantity < 10) return 'LOW STOCK';
+      return 'IN STOCK';
     };
 
     const getStockSeverity = (status) => {
       switch(status) {
-        case 'INSTOCK': return 'success';
-        case 'LOWSTOCK': return 'warn';
-        case 'OUTOFSTOCK': return 'danger';
+        case 'IN STOCK': return 'success';
+        case 'LOW STOCK': return 'warn';
+        case 'OUT OF STOCK': return 'danger';
         default: return null;
       }
     };
@@ -155,11 +175,16 @@ export default {
       }).format(price || 0);
     };
 
+    const goToCart = () => {
+      router.push('/cart');
+    };
+
     onMounted(() => {
       loadProducts();
     });
 
     return {
+      products,
       filteredProducts,
       isAuthenticated,
       cartCount,
@@ -169,82 +194,70 @@ export default {
       categories,
       sortOptions,
       selectedSort,
+      productDialog,
+      deleteDialog,
+      product,
+      submitted,
       addToCart,
-      goToCart,
       getStockStatus,
       getStockSeverity,
       formatPrice,
-      continueShopping: () => router.push('/')
+      handleImageError,
+      backgroundStyle,
+      toast,
+      goToCart
     };
   }
 };
 </script>
 
 <template>
-  <div class="products-view">
-    <Toast position="top-center" />
+  <div class="products-view" :style="backgroundStyle">
+    <Toast />
     
     <div class="page-header">
-      <div class="header-top">
-        <h1>Our Products</h1>
-        <div class="cart-icon-container" @click="goToCart">
-          <i class="pi pi-shopping-cart"></i>
-          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-        </div>
-      </div>
-      <p>Discover our collection of handcrafted wooden furniture</p>
+      <h1>Our Products</h1>
+      <p>Discover our collection of high-quality products</p>
     </div>
 
     <div class="content-card">
       <div class="toolbar">
         <div class="toolbar-left">
-          <span class="search-wrapper">
+          <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <input 
+            <InputText 
               v-model="searchQuery" 
               placeholder="Search products..." 
               class="search-input"
             />
           </span>
           
-          <select v-model="selectedCategory" class="category-select">
-            <option v-for="cat in categories" :key="cat.value" :value="cat.value">
-              {{ cat.name }}
-            </option>
-          </select>
+          <Dropdown 
+            v-model="selectedCategory" 
+            :options="categories" 
+            optionLabel="name" 
+            optionValue="value"
+            placeholder="Category" 
+            class="category-dropdown"
+          />
           
-          <select v-model="selectedSort" class="sort-select">
-            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-              {{ opt.name }}
-            </option>
-          </select>
+          <Dropdown 
+            v-model="selectedSort" 
+            :options="sortOptions" 
+            optionLabel="name" 
+            optionValue="value"
+            placeholder="Sort by" 
+            class="sort-dropdown"
+          />
         </div>
         
         <div class="toolbar-right">
-<<<<<<< HEAD
-          <button class="cart-btn-mobile" @click="goToCart">
+          <button class="cart-btn" @click="goToCart">
             <i class="pi pi-shopping-cart"></i>
-            <span v-if="cartCount > 0" class="cart-badge-mobile">{{ cartCount }}</span>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
           </button>
         </div>
       </div>
-=======
-  <button 
-    class="mobile-friendly-cart-btn" 
-    @click="goToCart"
-  >
-    <i class="pi pi-shopping-cart"></i>
-    <span 
-      v-if="cartCount > 0" 
-      class="cart-count-badge"
-    >
-      {{ cartCount }}
-    </span>
-  </button>
- </div>
-                  </div>
-                </div>
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
 
       <div v-if="loading" class="loading-state">
         <i class="pi pi-spin pi-spinner"></i>
@@ -255,29 +268,33 @@ export default {
         <i class="pi pi-box"></i>
         <h3>No Products Found</h3>
         <p v-if="searchQuery">No products match your search "{{ searchQuery }}"</p>
-        <p v-else>No products available at the moment.</p>
-        <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''">
-          Clear Search
-        </button>
+        <p v-else>No products available in the store yet.</p>
+        <Button 
+          v-if="searchQuery"
+          label="Clear Search" 
+          icon="pi pi-times"
+          @click="searchQuery = ''"
+          class="p-button-outlined"
+        />
       </div>
 
       <div v-else class="products-grid">
         <div 
-          v-for="product in filteredProducts" 
-          :key="product.product_id" 
+          v-for="product in filteredProducts"
+          :key="product.product_id"
           class="product-card"
           :class="{ 'out-of-stock': product.quantity <= 0 }"
         >
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
-<<<<<<< HEAD
           <div class="product-image">
-            <i class="pi pi-image"></i>
-=======
-          <div class="product-header">
-            <h3 class="product-name">{{ product.product_name }}</h3>
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
+            <img
+              :src="product.image_url || 'https://via.placeholder.com/300x200?text=No+Image'"
+              :alt="product.product_name"
+              @error="handleImageError"
+              loading="lazy"
+            />
           </div>
           
           <div class="product-info">
@@ -293,192 +310,122 @@ export default {
               />
               <span class="stock-count">{{ product.quantity }} available</span>
             </div>
+
+            <details class="product-description">
+              <summary>View Description</summary>
+              <p>{{ product.description || 'No description available.' }}</p>
+            </details>
             
-            <button 
+            <Button 
               @click="addToCart(product)" 
               :disabled="product.quantity === 0"
-<<<<<<< HEAD
-              class="add-to-cart-btn"
-            >
-              <i class="pi pi-shopping-cart"></i>
-              {{ product.quantity > 0 ? 'Add to Cart' : 'Out of Stock' }}
-            </button>
-=======
               :label="product.quantity > 0 ? 'Add to Cart' : 'Out of Stock'"
               icon="pi pi-shopping-cart"
               class="buy-btn"
               :class="{ 'p-button-outlined': product.quantity === 0 }"
             />
-
-            <!-- Description Toggle -->
-<button
-  class="btn btn-sm btn-outline-secondary w-100 mb-2"
-  data-bs-toggle="collapse"
-  :data-bs-target="`#desc-${product.product_id}`"
-  aria-expanded="false"
->
-  View Description
-</button>
-
-<!-- Product Description Dropdown -->
-<details class="product-description">
-  <summary>View Description</summary>
-  <p>
-    {{ product.description || 'No description available.' }}
-  </p>
-</details>
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
           </div>
         </div>
       </div>
     </div>
+
+    <Dialog 
+      v-model:visible="productDialog" 
+      :header="product.product_id ? 'Edit Product' : 'Add New Product'" 
+      :modal="true"
+      :style="{ width: '450px' }"
+      class="p-fluid"
+    >
+      <div class="field">
+        <label for="name">Product Name</label>
+        <InputText 
+          id="name" 
+          v-model="product.product_name" 
+          required
+          :class="{ 'p-invalid': submitted && !product.product_name }"
+        />
+        <small v-if="submitted && !product.product_name" class="p-error">Product name is required.</small>
+      </div>
+
+      <div class="field">
+        <label for="price">Price (R)</label>
+        <InputNumber 
+          id="price" 
+          v-model="product.product_price" 
+          mode="currency" 
+          currency="ZAR" 
+          :min="0.01"
+          :class="{ 'p-invalid': submitted && !product.product_price }"
+        />
+        <small v-if="submitted && !product.product_price" class="p-error">Price is required.</small>
+      </div>
+
+      <div class="field">
+        <label for="quantity">Quantity</label>
+        <InputNumber 
+          id="quantity" 
+          v-model="product.quantity" 
+          :min="0"
+          :class="{ 'p-invalid': submitted && product.quantity === null }"
+        />
+        <small v-if="submitted && product.quantity === null" class="p-error">Quantity is required.</small>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" icon="pi pi-times" @click="productDialog = false" class="p-button-text"/>
+        <Button label="Save" icon="pi pi-check" @click="saveProduct" autofocus />
+      </template>
+    </Dialog>
+
+    <Dialog 
+      v-model:visible="deleteDialog" 
+      header="Confirm Delete" 
+      :modal="true"
+      :style="{ width: '350px' }"
+    >
+      <div class="confirmation-content">
+        <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #f59e0b; margin-right: 1rem;" />
+        <span v-if="editingProduct">Are you sure you want to delete <b>{{ editingProduct.product_name }}</b>?</span>
+      </div>
+      <template #footer>
+        <Button label="No" icon="pi pi-times" @click="deleteDialog = false" class="p-button-text"/>
+        <Button label="Yes" icon="pi pi-check" @click="deleteProduct" class="p-button-danger" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <style scoped>
 .products-view {
-  max-width: 1400px;
+  position: relative;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
-<<<<<<< HEAD
-=======
   min-height: 100vh;
-  background-image: url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
   font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
-/* Product description dropdown */
-.product-description {
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0.75rem;
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
 }
 
-/* Remove default marker */
-.product-description summary {
-  cursor: pointer;
+.page-header h1 {
+  font-size: 2.5rem;
   font-weight: 600;
-  color: #7c6a2d;
-  list-style: none;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Custom arrow */
-.product-description summary::after {
-  content: "▾";
-  font-size: 1rem;
-  transition: transform 0.2s ease;
-}
-
-/* Rotate arrow when open */
-.product-description[open] summary::after {
-  transform: rotate(180deg);
-}
-
-/* Hide default disclosure triangle */
-.product-description summary::-webkit-details-marker {
-  display: none;
-}
-
-.product-description p {
-  margin-top: 0.75rem;
-  font-size: 0.95rem;
-  color: #4b5563;
-  line-height: 1.5;
-}
-
-.content-card,
-.page-header {
-  position: relative;
-  z-index: 1;
-}
-
-.content-card {
-  background: rgba(61, 124, 79, 0.4);  /* 80% opaque, 20% transparent */
-  border-radius: 16px;
-  backdrop-filter: blur(10px);  /* Adds blur effect */
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
->>>>>>> 61a5a397a678fa5387c13e77ee2df241c17d53e0
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  color: #b9b6b2;
   margin-bottom: 0.5rem;
 }
 
-.header-top h1 {
-  font-size: 2.5rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
-}
-
-.cart-icon-container {
-  position: relative;
-  cursor: pointer;
-  padding: 0.75rem;
-  border-radius: 50%;
-  background: #8b4513;
-  color: white;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-}
-
-.cart-icon-container:hover {
-  background: #a0522d;
-  transform: scale(1.05);
-}
-
-.cart-icon-container i {
-  font-size: 1.5rem;
-}
-
-.cart-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #e53e3e;
-  color: white;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: bold;
-  border: 2px solid white;
-}
-
 .page-header p {
-  color: #718096;
+  color: #ffffff;
   font-size: 1.1rem;
-  margin: 0;
 }
 
 .content-card {
-  background: white;
+  background: rgba(61, 124, 79, 0.4);
   border-radius: 16px;
+  backdrop-filter: blur(10px);
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -499,100 +446,92 @@ export default {
   flex: 1;
 }
 
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-wrapper i {
-  position: absolute;
-  left: 1rem;
-  color: #a0aec0;
-}
-
 .search-input {
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
   width: 250px;
-  font-size: 0.95rem;
-  transition: all 0.3s;
+  padding-left: 2rem !important;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: #8b4513;
+.p-input-icon-left {
+  position: relative;
+  display: inline-block;
 }
 
-.category-select, .sort-select {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.95rem;
-  cursor: pointer;
-  min-width: 150px;
+.p-input-icon-left i {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  z-index: 1;
 }
 
-.category-select:focus, .sort-select:focus {
-  outline: none;
-  border-color: #8b4513;
+.category-dropdown, .sort-dropdown {
+  width: 150px;
 }
 
 .toolbar-right {
   display: flex;
   gap: 1rem;
-}
-
-.cart-btn-mobile {
-  display: none;
-  position: relative;
-  background: #8b4513;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
 }
 
-.cart-btn-mobile i {
-  font-size: 1.25rem;
-}
-
-.cart-badge-mobile {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #e53e3e;
+.cart-btn {
+  background: linear-gradient(135deg, #83ea66 0%, #4fa24b 100%);
+  border: none;
   color: white;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-size: 24px;
+}
+
+.cart-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(234, 203, 102, 0.4);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
   font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .product-card {
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   border: 1px solid #e2e8f0;
   position: relative;
+  overflow: hidden;
 }
 
 .product-card:hover {
@@ -601,21 +540,22 @@ export default {
 }
 
 .product-card.out-of-stock {
-  opacity: 0.7;
+  opacity: 0.9;
   background: #f7fafc;
 }
 
 .product-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 1rem;
+  right: -2rem;
   background: #e53e3e;
   color: white;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
-  font-weight: bold;
-  border-radius: 4px;
-  z-index: 5;
+  padding: 0.25rem 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transform: rotate(45deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 .product-badge.low-stock {
@@ -623,94 +563,120 @@ export default {
 }
 
 .product-image {
-  height: 200px;
+  width: 100%;
+  height: 250px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
   background: #f7fafc;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #e2e8f0;
 }
 
-.product-image i {
-  font-size: 3rem;
-  color: #cbd5e0;
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-image img:hover {
+  transform: scale(1.05);
 }
 
 .product-info {
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .product-name {
-  margin: 0 0 0.25rem;
-  color: #2d3748;
-  font-size: 1.1rem;
+  margin: 0;
+  color: #947234;
+  font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.4;
 }
 
 .product-id {
-  color: #a0aec0;
-  font-size: 0.75rem;
-  margin: 0 0 0.5rem;
+  color: #000000;
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .product-price {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #8b4513;
-  margin-bottom: 0.75rem;
+  color: #a18848;
+  margin: 0.5rem 0;
 }
 
 .product-stock {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .stock-count {
-  color: #718096;
-  font-size: 0.8rem;
+  color: #719673;
+  font-size: 0.875rem;
 }
 
-.add-to-cart-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #8b4513;
-  color: white;
-  border: none;
+.product-description {
+  margin-bottom: 1rem;
   border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+.product-description summary {
   cursor: pointer;
-  transition: all 0.3s;
+  font-weight: 600;
+  color: #7c6a2d;
+  list-style: none;
+  outline: none;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  justify-content: space-between;
 }
 
-.add-to-cart-btn:hover:not(:disabled) {
-  background: #a0522d;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+.product-description summary::after {
+  content: "▾";
+  font-size: 1rem;
+  transition: transform 0.2s ease;
 }
 
-.add-to-cart-btn:disabled {
-  background: #cbd5e0;
-  cursor: not-allowed;
+.product-description[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.product-description summary::-webkit-details-marker {
+  display: none;
+}
+
+.product-description p {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.buy-btn {
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 .loading-state, .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #718096;
+  color: #71967b;
 }
 
 .loading-state i {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #8b4513;
 }
 
 .empty-state i {
@@ -720,23 +686,55 @@ export default {
 }
 
 .empty-state h3 {
-  color: #2d3748;
+  color: #6b5f24;
   margin-bottom: 0.5rem;
 }
 
-.clear-btn {
-  margin-top: 1rem;
-  padding: 0.5rem 1.5rem;
-  background: #8b4513;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s;
+.field {
+  margin-bottom: 1.5rem;
 }
 
-.clear-btn:hover {
-  background: #a0522d;
+.field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #7d4423;
+}
+
+.confirmation-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+@media (min-width: 769px) {
+  .cart-btn {
+    width: auto;
+    height: auto;
+    border-radius: 50px;
+    padding: 12px 24px;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .cart-badge {
+    position: static;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -744,39 +742,38 @@ export default {
     padding: 1rem;
   }
   
-  .header-top h1 {
-    font-size: 2rem;
-  }
-  
-  .cart-icon-container {
-    display: none;
-  }
-  
-  .cart-btn-mobile {
-    display: flex;
-  }
-  
   .toolbar-left {
     flex-direction: column;
     width: 100%;
   }
   
-  .search-wrapper {
+  .search-input,
+  .category-dropdown,
+  .sort-dropdown {
     width: 100%;
   }
   
-  .search-input {
-    width: 100%;
-  }
-  
-  .category-select,
-  .sort-select {
-    width: 100%;
+  .page-header h1 {
+    font-size: 2rem;
   }
   
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  :deep(.p-toast) {
+    width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
   }
 }
 </style>
