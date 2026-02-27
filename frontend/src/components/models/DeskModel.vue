@@ -7,6 +7,9 @@ const props = defineProps({
   features: { type: Array, default: () => [] }
 })
 
+// Create a ref for the root group
+const groupRef = ref(null)
+
 // Dimensions with defaults
 const topWidth = computed(() => ((props.dimensions?.topWidth || props.dimensions?.width || 150) / 100))
 const topDepth = computed(() => ((props.dimensions?.topDepth || props.dimensions?.depth || 80) / 100))
@@ -49,7 +52,6 @@ const woodGrainLines = computed(() => {
   const count = Math.floor(topWidth.value * 15)
   for (let i = 0; i < count; i++) {
     const x = -topWidth.value/2 + (i / count) * topWidth.value
-    // Add slight randomness to grain
     const offset = (Math.sin(i * 0.3) * 0.005)
     lines.push({
       position: [x + offset, topHeight.value + topThickness.value/2 + 0.0005, 0],
@@ -67,10 +69,13 @@ const legPositions = computed(() => [
   [-topWidth.value/2 + legOffset.value, legHeight.value/2, topDepth.value/2 - legOffset.value],
   [topWidth.value/2 - legOffset.value, legHeight.value/2, topDepth.value/2 - legOffset.value]
 ])
+
+// Expose the group ref so the parent can access the Three.js object
+defineExpose({ group: groupRef })
 </script>
 
 <template>
-  <TresGroup :position="[xOffset, yOffset, zOffset]">
+  <TresGroup ref="groupRef" :position="[xOffset, yOffset, zOffset]">
     <!-- DESK TOP ASSEMBLY -->
     
     <!-- Main desktop surface with rounded corners -->
