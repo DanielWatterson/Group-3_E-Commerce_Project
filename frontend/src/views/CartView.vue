@@ -29,7 +29,6 @@ export default {
     const processingPayment = ref(false);
     const showConfirmDialog = ref(false);
     const termsAccepted = ref(false);
-    const paymentMethod = ref("payfast");
 
     const customerInfo = ref({
       firstName: localStorage.getItem("userName")?.split(" ")[0] || "",
@@ -206,7 +205,6 @@ export default {
       showConfirmDialog.value = true;
     };
 
-    // Process payment with PayFast
     const processPayment = async () => {
       if (!termsAccepted.value) {
         toast.add({
@@ -222,30 +220,22 @@ export default {
       showConfirmDialog.value = false;
 
       try {
-        const checkoutPayload = {
-          customer: {
-            firstName: customerInfo.value.firstName?.trim() || "",
-            lastName: customerInfo.value.lastName?.trim() || "",
-            email: customerInfo.value.email?.toLowerCase().trim() || "",
-            phone: customerInfo.value.phone?.trim() || "",
-          },
-          items: cartItems.value.map((item) => ({
-            product_id: item.product_id,
-            quantity: item.cart_quantity,
-          })),
-          item_name:
-            cartItems.value.length === 1
-              ? cartItems.value[0].product_name
-              : `LumberLink Order (${cartItems.value.length} items)`,
+        const total = Number(cartTotal.value) * 1.15;
+
+        const order = {
+          amount: total.toFixed(2),
+          item_name: cartItems.value.length === 1
+            ? cartItems.value[0].product_name
+            : `Order (${cartCount.value} items)`,
+          name_first: customerInfo.value.firstName?.trim() || "Customer",
+          name_last: customerInfo.value.lastName?.trim() || "",
+          email_address: customerInfo.value.email?.toLowerCase().trim() || "test@example.com",
         };
 
-        const paymentSession = await payfastService.createPaymentSession(checkoutPayload);
-
         localStorage.setItem("pendingOrder", JSON.stringify({
-          payment_id: paymentSession.payment_id,
-          order_id: paymentSession.order_id,
+          ...order,
           items: cartItems.value,
-          shipping: customerInfo.value,
+          shipping: customerInfo.value
         }));
 
         toast.add({
@@ -256,19 +246,23 @@ export default {
         });
 
         setTimeout(() => {
-          payfastService.redirectToPayFast(paymentSession);
+          payfastService.redirectToPayFast(order);
         }, 1500);
       } catch (error) {
-        console.error("Payment error:", error?.response?.data || error);
+        console.error("Payment error:", error);
         toast.add({
           severity: "error",
           summary: "Payment Failed",
-          detail: error?.response?.data?.error || error.message || "Please try again",
+          detail: error.message || "Please try again",
           life: 5000,
         });
         processingPayment.value = false;
         showConfirmDialog.value = true;
       }
+    };
+
+    const continueShopping = () => {
+      router.push("/products");
     };
 
     return {
@@ -280,7 +274,6 @@ export default {
       processingPayment,
       showConfirmDialog,
       termsAccepted,
-      paymentMethod,
       customerInfo,
       provinces,
       formatPrice,
@@ -290,7 +283,7 @@ export default {
       clearCart,
       openConfirmDialog,
       processPayment,
-      continueShopping: () => router.push("/products"),
+      continueShopping,
     };
   },
 };
@@ -299,73 +292,89 @@ export default {
 <template>
   <div class="cart-view">
     <Toast />
-    <div class="page-header">
+    
+    <div class="cart-header">
+      <button class="back-btn" @click="continueShopping">
+        <i class="pi pi-arrow-left"></i>
+        Continue Shopping
+      </button>
       <h1>Shopping Cart</h1>
-      <p v-if="cartItems.length > 0">
-        You have <strong>{{ cartCount }}</strong> item{{ cartCount !== 1 ? "s" : "" }} in your cart
-      </p>
-      <p v-else>Your cart is waiting to be filled</p>
+      <div class="cart-count-badge" v-if="cartItems.length > 0">
+        {{ cartCount }} item{{ cartCount !== 1 ? "s" : "" }}
+      </div>
     </div>
 
     <div class="cart-container">
       <div v-if="cartItems.length === 0" class="empty-cart">
-        <Card class="empty-cart-card">
-          <template #content>
-            <div class="empty-cart-content">
-              <i class="pi pi-shopping-cart empty-icon"></i>
-              <h2>Your cart is empty</h2>
-              <p>Looks like you haven't added any items yet</p>
-              <Button label="Browse Products" icon="pi pi-shopping-bag" class="shop-btn" @click="continueShopping" />
-            </div>
-          </template>
-        </Card>
+        <div class="empty-cart-content">
+          <i class="pi pi-shopping-cart empty-icon"></i>
+          <h2>Your cart is empty</h2>
+          <p>Looks like you haven't added any items yet</p>
+          <button class="shop-btn" @click="continueShopping">
+            <i class="pi pi-shopping-bag"></i>
+            Browse Products
+          </button>
+        </div>
       </div>
 
       <div v-else class="cart-with-items">
         <div class="cart-main">
-          <Card class="items-card">
-            <template #title>
-              <div class="section-header">
-                <h2>Your Items</h2>
-                <Button label="Clear Cart" icon="pi pi-trash" class="p-button-text p-button-danger" :disabled="updating" @click="clearCart" />
+          <div class="cart-items-section">
+            <h2>Your Items</h2>
+            
+            <div v-for="item in cartItems" :key="item.product_id" class="cart-item">
+              <div class="item-image">
+                <i class="pi pi-box"></i>
               </div>
-            </template>
-            <template #content>
-              <div class="cart-items-list">
-                <div v-for="item in cartItems" :key="item.product_id" class="cart-item-card">
-                  <div class="item-image">
-                    <div class="image-placeholder">
-                      <i class="pi pi-box"></i>
-                    </div>
+              
+              <div class="item-details">
+                <div class="item-header">
+                  <h3>{{ item.product_name }}</h3>
+                  <span class="item-price">{{ formatPrice(item.product_price * item.cart_quantity) }}</span>
+                </div>
+                
+                <div class="item-meta">
+                  <span class="item-id">#{{ item.product_id }}</span>
+                  <span class="item-unit-price">{{ formatPrice(item.product_price) }} each</span>
+                </div>
+                
+                <div class="item-actions">
+                  <div class="quantity-controls">
+                    <button 
+                      class="qty-btn" 
+                      :disabled="updating || item.cart_quantity <= 1"
+                      @click="removeOne(item)"
+                    >
+                      <i class="pi pi-minus"></i>
+                    </button>
+                    <span class="quantity">{{ item.cart_quantity }}</span>
+                    <button 
+                      class="qty-btn" 
+                      :disabled="updating || item.cart_quantity >= item.quantity"
+                      @click="addOne(item)"
+                    >
+                      <i class="pi pi-plus"></i>
+                    </button>
                   </div>
-                  <div class="item-details">
-                    <div class="item-header">
-                      <h3>{{ item.product_name }}</h3>
-                      <span class="item-id">#{{ item.product_id }}</span>
-                    </div>
-                    <div class="item-price-row">
-                      <div class="item-price">{{ formatPrice(item.product_price) }} each</div>
-                      <div class="item-total">
-                        Total: <strong>{{ formatPrice(item.product_price * item.cart_quantity) }}</strong>
-                      </div>
-                    </div>
-                    <div class="item-actions">
-                      <div class="quantity-controls">
-                        <label>Quantity:</label>
-                        <div class="quantity-buttons">
-                          <Button icon="pi pi-minus" class="p-button-rounded p-button-text quantity-btn" :disabled="updating || item.cart_quantity <= 1" @click="removeOne(item)" />
-                          <span class="quantity-display">{{ item.cart_quantity }}</span>
-                          <Button icon="pi pi-plus" class="p-button-rounded p-button-text quantity-btn" :disabled="updating || item.cart_quantity >= item.quantity" @click="addOne(item)" />
-                        </div>
-                        <small v-if="item.quantity < 10" class="stock-warning">Only {{ item.quantity }} left</small>
-                      </div>
-                      <Button icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger remove-btn" :disabled="updating" @click="removeItem(item)" />
-                    </div>
-                  </div>
+                  
+                  <button class="remove-btn" @click="removeItem(item)" :disabled="updating">
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+                
+                <div v-if="item.quantity < 10" class="stock-warning">
+                  Only {{ item.quantity }} left in stock
                 </div>
               </div>
-            </template>
-          </Card>
+            </div>
+            
+            <div class="cart-actions">
+              <button class="clear-cart-btn" @click="clearCart" :disabled="updating">
+                <i class="pi pi-trash"></i>
+                Clear Cart
+              </button>
+            </div>
+          </div>
 
           <Card class="info-card">
             <template #title><h2>Your Information</h2></template>
@@ -449,81 +458,120 @@ export default {
         </div>
 
         <div class="order-sidebar">
-          <Card class="summary-card">
-            <template #title><h2>Order Summary</h2></template>
-            <template #content>
-              <div class="summary-items">
-                <div v-for="item in cartItems" :key="item.product_id" class="summary-item">
-                  <span>{{ item.product_name }} x{{ item.cart_quantity }}</span>
-                  <span class="item-price">{{ formatPrice(item.product_price * item.cart_quantity) }}</span>
-                </div>
+          <div class="summary-card">
+            <h2>Order Summary</h2>
+            
+            <div class="summary-items">
+              <div v-for="item in cartItems" :key="item.product_id" class="summary-item">
+                <span>{{ item.product_name }} x{{ item.cart_quantity }}</span>
+                <span>{{ formatPrice(item.product_price * item.cart_quantity) }}</span>
               </div>
-              <div class="summary-divider"></div>
-              <div class="summary-row">
-                <span>Subtotal</span>
-                <span>{{ formatPrice(cartTotal) }}</span>
-              </div>
-              <div class="summary-row">
-                <span>Shipping</span>
-                <span class="free">Free</span>
-              </div>
-              <div class="summary-row">
-                <span>VAT (15%)</span>
-                <span>{{ formatPrice(cartTotal * 0.15) }}</span>
-              </div>
-              <div class="summary-divider"></div>
-              <div class="summary-row total">
-                <span>Total (ZAR)</span>
-                <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
-              </div>
-              <Button label="Confirm & Pay" icon="pi pi-lock" class="checkout-btn" :disabled="processingPayment" @click="openConfirmDialog" />
-              <div class="secure-badge">
-                <i class="pi pi-shield"></i>
-                <span>Secured by PayFast</span>
-              </div>
-            </template>
-          </Card>
+            </div>
+            
+            <div class="summary-divider"></div>
+            
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>{{ formatPrice(cartTotal) }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping</span>
+              <span class="free">Free</span>
+            </div>
+            <div class="summary-row">
+              <span>VAT (15%)</span>
+              <span>{{ formatPrice(cartTotal * 0.15) }}</span>
+            </div>
+            
+            <div class="summary-divider"></div>
+            
+            <div class="summary-total">
+              <span>Total (ZAR)</span>
+              <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
+            </div>
+            
+            <button 
+              class="checkout-btn" 
+              :disabled="processingPayment"
+              @click="openConfirmDialog"
+            >
+              <i class="pi pi-lock"></i>
+              {{ processingPayment ? 'Processing...' : 'Proceed to Checkout' }}
+            </button>
+            
+            <div class="secure-badge">
+              <i class="pi pi-shield"></i>
+              <span>Secured by PayFast</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <Dialog v-model:visible="showConfirmDialog" header="Confirm Your Order" :modal="true" :style="{ width: '450px' }">
-      <div class="confirmation-content">
-        <div class="order-summary-mini">
-          <h3>Order Summary</h3>
-          <div class="summary-mini-row">
-            <span>Items:</span>
-            <span>{{ cartCount }}</span>
+    <div v-if="showConfirmDialog" class="modal-overlay" @click="showConfirmDialog = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Confirm Your Order</h3>
+          <button class="close-modal" @click="showConfirmDialog = false">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="order-summary-mini">
+            <h4>Order Summary</h4>
+            <div class="summary-mini-row">
+              <span>Items:</span>
+              <span>{{ cartCount }}</span>
+            </div>
+            <div class="summary-mini-row">
+              <span>Subtotal:</span>
+              <span>{{ formatPrice(cartTotal) }}</span>
+            </div>
+            <div class="summary-mini-row">
+              <span>VAT (15%):</span>
+              <span>{{ formatPrice(cartTotal * 0.15) }}</span>
+            </div>
+            <div class="summary-mini-row total">
+              <span>Total to Pay:</span>
+              <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
+            </div>
           </div>
-          <div class="summary-mini-row">
-            <span>Subtotal:</span>
-            <span>{{ formatPrice(cartTotal) }}</span>
+          
+          <div class="delivery-summary">
+            <h4>Deliver to:</h4>
+            <p>{{ customerInfo.firstName }} {{ customerInfo.lastName }}</p>
+            <p>{{ customerInfo.address }}</p>
+            <p>{{ customerInfo.city }}, {{ customerInfo.province }} {{ customerInfo.postalCode }}</p>
           </div>
-          <div class="summary-mini-row">
-            <span>VAT (15%):</span>
-            <span>{{ formatPrice(cartTotal * 0.15) }}</span>
-          </div>
-          <div class="summary-mini-row total">
-            <span>Total to Pay:</span>
-            <span class="total-amount">{{ formatPrice(cartTotal * 1.15) }}</span>
+          
+          <div class="terms-checkbox">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              v-model="termsAccepted"
+            />
+            <label for="terms">
+              I confirm my order details are correct and agree to the terms and conditions.
+            </label>
           </div>
         </div>
-        <div class="delivery-summary">
-          <h4>Delivery to:</h4>
-          <p>{{ customerInfo.firstName }} {{ customerInfo.lastName }}</p>
-          <p>{{ customerInfo.address }}</p>
-          <p>{{ customerInfo.city }}, {{ customerInfo.province }} {{ customerInfo.postalCode }}</p>
-        </div>
-        <div class="terms-checkbox">
-          <Checkbox v-model="termsAccepted" :binary="true" inputId="terms" />
-          <label for="terms">I confirm my order details are correct and agree to the terms and conditions.</label>
+        
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="showConfirmDialog = false">
+            Cancel
+          </button>
+          <button 
+            class="confirm-btn" 
+            @click="processPayment" 
+            :disabled="!termsAccepted || processingPayment"
+          >
+            <i class="pi pi-lock"></i>
+            {{ processingPayment ? 'Processing...' : 'Confirm & Pay Now' }}
+          </button>
         </div>
       </div>
-      <template #footer>
-        <Button label="Cancel" icon="pi pi-times" @click="showConfirmDialog = false" class="p-button-text" />
-        <Button label="Confirm & Pay Now" icon="pi pi-lock" @click="processPayment" :disabled="!termsAccepted || processingPayment" :loading="processingPayment" class="confirm-btn" />
-      </template>
-    </Dialog>
+    </div>
   </div>
 </template>
 
@@ -533,264 +581,424 @@ export default {
   margin: 0 auto;
   padding: 2rem;
 }
-.page-header {
-  text-align: center;
+
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
-.page-header h1 {
-  font-size: 2.5rem;
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #8b4513;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.back-btn:hover {
+  background: #f0f0f0;
+}
+
+.cart-header h1 {
+  font-size: 2rem;
   color: #2d3748;
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
+
+.cart-count-badge {
+  background: #8b4513;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
 .empty-cart {
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 500px;
+  margin: 3rem auto;
 }
-.empty-cart-card {
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-}
+
 .empty-cart-content {
   text-align: center;
   padding: 3rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
+
 .empty-icon {
   font-size: 5rem;
   color: #cbd5e0;
   margin-bottom: 1.5rem;
 }
+
+.empty-cart-content h2 {
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.empty-cart-content p {
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
 .shop-btn {
   background: #8b4513;
-  border: 2px solid #8b4513;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
 }
+
+.shop-btn:hover {
+  background: #a0522d;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+}
+
 .cart-with-items {
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 2rem;
 }
+
 .cart-main {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
-.items-card, .info-card, .payment-card, .summary-card {
-  border: 2px solid #e2e8f0;
+
+.cart-items-section {
+  background: white;
   border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+.cart-items-section h2 {
+  margin: 0 0 1.5rem;
+  color: #2d3748;
+  font-size: 1.25rem;
 }
-.cart-items-list {
+
+.cart-item {
   display: flex;
-  flex-direction: column;
   gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
 }
-.cart-item-card {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+
+.cart-item:last-child {
+  border-bottom: none;
 }
+
 .item-image {
-  flex-shrink: 0;
-}
-.image-placeholder {
-  width: 100px;
-  height: 100px;
-  background: #edf2f7;
-  border: 2px dashed #cbd5e0;
+  width: 80px;
+  height: 80px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
-.image-placeholder i {
+
+.item-image i {
   font-size: 2rem;
-  color: #a0aec0;
+  color: #cbd5e0;
 }
+
 .item-details {
   flex: 1;
 }
+
 .item-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
+
 .item-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  color: #2d3748;
 }
-.item-id {
-  color: #a0aec0;
-  font-size: 0.75rem;
-}
-.item-price-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
+
 .item-price {
-  color: #8b4513;
   font-weight: 600;
+  color: #8b4513;
 }
+
+.item-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
 .item-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .quantity-controls {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.quantity-buttons {
-  display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.quantity-btn {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 1px solid #e2e8f0 !important;
-}
-.quantity-display {
-  min-width: 2rem;
-  text-align: center;
-  font-weight: 600;
-}
-.stock-warning {
-  color: #e53e3e;
-  font-size: 0.7rem;
-}
-.remove-btn {
-  width: 2rem;
-  height: 2rem;
-}
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.info-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-.info-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.info-field.full-width {
-  grid-column: 1 / -1;
-}
-.info-field label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #4a5568;
-}
-.payment-option {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-}
-.payment-option.selected {
-  border-color: #8b4513;
-  background: #fff5f0;
-}
-.payment-icons {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-.payfast-icon {
-  background: #8b4513;
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+
+.qty-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
 }
-.test-info {
-  background: #f0f9ff;
-  border: 2px solid #bae6fd;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
+
+.qty-btn:hover:not(:disabled) {
+  background: #8b4513;
+  color: white;
+  border-color: #8b4513;
 }
-.test-info h4 {
-  color: #0369a1;
-  margin: 0 0 0.5rem;
+
+.qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
-.test-note {
+
+.quantity {
+  font-weight: 600;
+  min-width: 30px;
+  text-align: center;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
   color: #e53e3e;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.remove-btn:hover:not(:disabled) {
+  background: #fff5f5;
+}
+
+.remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stock-warning {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #e53e3e;
+}
+
+.cart-actions {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.clear-cart-btn {
+  background: none;
+  border: 1px solid #e53e3e;
+  color: #e53e3e;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.clear-cart-btn:hover:not(:disabled) {
+  background: #e53e3e;
+  color: white;
+}
+
+.clear-cart-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.info-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.info-section h2 {
+  margin: 0 0 1.5rem;
+  color: #2d3748;
+  font-size: 1.25rem;
+}
+
+.info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
   font-size: 0.8rem;
   font-weight: 600;
+  color: #4a5568;
 }
+
+.form-group input,
+.form-group select {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #8b4513;
+}
+
 .order-sidebar {
   position: sticky;
   top: 100px;
   align-self: start;
 }
+
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card h2 {
+  margin: 0 0 1.5rem;
+  color: #2d3748;
+  font-size: 1.25rem;
+}
+
 .summary-items {
   max-height: 300px;
   overflow-y: auto;
   margin-bottom: 1rem;
 }
+
 .summary-item {
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
   border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
 }
-.item-price {
-  color: #8b4513;
-  font-weight: 600;
+
+.summary-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 1rem 0;
 }
+
 .summary-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
   color: #718096;
 }
-.summary-row.total {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 1rem 0;
-}
-.total-amount {
-  color: #8b4513;
-  font-size: 1.4rem;
-}
+
 .free {
   color: #38a169;
   font-weight: 600;
 }
-.summary-divider {
-  height: 2px;
-  background: #e2e8f0;
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
   margin: 1rem 0;
 }
+
+.total-amount {
+  color: #8b4513;
+  font-size: 1.5rem;
+}
+
 .checkout-btn {
-  background: #8b4513;
-  border: 2px solid #8b4513;
   width: 100%;
-  padding: 0.75rem;
+  padding: 1rem;
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
   margin-bottom: 1rem;
 }
+
+.checkout-btn:hover:not(:disabled) {
+  background: #a0522d;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+}
+
+.checkout-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
 .secure-badge {
   display: flex;
   align-items: center;
@@ -798,22 +1006,122 @@ export default {
   gap: 0.5rem;
   padding: 0.5rem;
   background: #f0f9ff;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #0369a1;
   font-size: 0.8rem;
 }
-.confirmation-content {
-  padding: 1rem 0;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 450px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #718096;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.close-modal:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
 .order-summary-mini {
-  background: #f9fafb;
+  background: #f7fafc;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
 }
+
+.order-summary-mini h4 {
+  margin: 0 0 0.5rem;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.summary-mini-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.summary-mini-row.total {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 600;
+}
+
 .delivery-summary {
   margin-bottom: 1rem;
 }
+
+.delivery-summary h4 {
+  margin: 0 0 0.5rem;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.delivery-summary p {
+  margin: 0.25rem 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
 .terms-checkbox {
   display: flex;
   align-items: center;
@@ -821,31 +1129,88 @@ export default {
   padding: 1rem 0;
   border-top: 1px solid #e2e8f0;
 }
-.confirm-btn {
-  background: #8b4513;
-  border: 2px solid #8b4513;
+
+.terms-checkbox label {
+  font-size: 0.9rem;
+  color: #4a5568;
 }
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  background: #f7fafc;
+}
+
+.confirm-btn {
+  flex: 2;
+  padding: 0.75rem;
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: #a0522d;
+}
+
+.confirm-btn:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
 @media (max-width: 1024px) {
   .cart-with-items {
     grid-template-columns: 1fr;
   }
+  
   .order-sidebar {
     position: static;
   }
 }
+
 @media (max-width: 768px) {
   .cart-view {
     padding: 1rem;
   }
-  .cart-item-card {
+  
+  .cart-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .cart-item {
     flex-direction: column;
   }
-  .image-placeholder {
+  
+  .item-image {
     width: 100%;
     height: 150px;
-  }
-  .info-row {
-    grid-template-columns: 1fr;
   }
 }
 </style>

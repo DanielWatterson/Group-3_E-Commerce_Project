@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import axios from 'axios';
 
 export default {
   name: "ProductsView",
@@ -10,10 +11,22 @@ export default {
     const store = useStore();
     const router = useRouter();
     const toast = useToast();
-    
+
+    const handleImageError = (event) => {
+      event.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+    };
+
     const products = computed(() => store.state.products || []);
     const isAuthenticated = computed(() => store.getters.isAuthenticated);
     const cartCount = computed(() => store.getters.cartCount);
+    
+    const backgroundStyle = computed(() => ({
+      backgroundImage: "url('https://i.postimg.cc/8zxhgS81/images-q-tbn-ANd9Gc-TPxy-RDo1tp2r-Lcvi-H3r-K57l-YEn-TNO3vy-Qqo-Q-s.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      minHeight: '100vh'
+    }));
     
     const loading = ref(false);
     const searchQuery = ref('');
@@ -26,9 +39,8 @@ export default {
     
     const categories = ref([
       { name: 'All Products', value: null },
-      { name: 'Software', value: 'software' },
-      { name: 'AI Chatbot', value: 'ai chatbot' },
-      { name: 'Code', value: 'code' }
+      { name: 'Desk', value: 'desk' },
+      { name: 'Tableware', value: 'tableware' },
     ]);
 
     const sortOptions = ref([
@@ -36,12 +48,11 @@ export default {
       { name: 'Name (Z-A)', value: 'name_desc' },
       { name: 'Price (Low to High)', value: 'price_asc' },
       { name: 'Price (High to Low)', value: 'price_desc' },
-      { name: 'Stock (Low to High)', value: 'stock_asc' }
+      { name: 'Stock (Low to High)', value: 'stock_asc' },
     ]);
     
     const selectedSort = ref('name_asc');
 
-    // Filtered and sorted products
     const filteredProducts = computed(() => {
       let filtered = products.value;
       
@@ -74,10 +85,9 @@ export default {
         }
       });
       
-      return filtered;
+      return filtered; 
     });
 
-    // Load products
     const loadProducts = async () => {
       loading.value = true;
       try {
@@ -90,107 +100,70 @@ export default {
       }
     };
 
-    // Product CRUD operations
-    const openNew = () => {
-      product.value = {
-        product_name: '',
-        product_price: 0,
-        quantity: 0
-      };
-      submitted.value = false;
-      productDialog.value = true;
-    };
-
-    const editProduct = (prod) => {
-      product.value = { ...prod };
-      productDialog.value = true;
-    };
-
-    const confirmDelete = (prod) => {
-      editingProduct.value = prod;
-      deleteDialog.value = true;
-    };
-
-    const saveProduct = async () => {
-      submitted.value = true;
+    const addToCart = async (product) => {
+      console.log('🔵 ADD TO CART CLICKED', product);
       
-      if (product.value.product_name && product.value.product_price > 0 && product.value.quantity >= 0) {
-        loading.value = true;
-        try {
-          if (product.value.product_id) {
-            await store.dispatch('updateProduct', {
-              id: product.value.product_id,
-              product_name: product.value.product_name,
-              product_price: product.value.product_price,
-              quantity: product.value.quantity
-            });
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully', life: 3000 });
-          } else {
-            await store.dispatch('createProduct', {
-              product_name: product.value.product_name,
-              product_price: product.value.product_price,
-              quantity: product.value.quantity
-            });
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully', life: 3000 });
-          }
-          
-          productDialog.value = false;
-          product.value = {};
-          await loadProducts();
-        } catch (error) {
-          console.error("Operation failed:", error);
-          toast.add({ severity: 'error', summary: 'Error', detail: 'Operation failed', life: 3000 });
-        } finally {
-          loading.value = false;
-        }
-      }
-    };
-
-    const deleteProduct = async () => {
-      loading.value = true;
-      try {
-        await store.dispatch('deleteProduct', editingProduct.value.product_id);
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Product deleted successfully', life: 3000 });
-        deleteDialog.value = false;
-        editingProduct.value = null;
-        await loadProducts();
-      } catch (error) {
-        console.error("Failed to delete product:", error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete product', life: 3000 });
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    // Add to cart
-    const addToCart = (product) => {
       if (!isAuthenticated.value) {
+        console.log('🔴 User not authenticated');
         toast.add({ severity: 'warn', summary: 'Warning', detail: 'Please login to add items to cart', life: 3000 });
         router.push('/login');
         return;
       }
       
       if (product.quantity <= 0) {
+        console.log('🔴 Product out of stock');
         toast.add({ severity: 'error', summary: 'Error', detail: 'Product is out of stock', life: 3000 });
         return;
       }
       
-      store.dispatch('addToCart', product);
-      toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
+      try {
+        console.log('🟡 Sending PATCH request to:', `http://localhost:5050/products/${product.product_id}/decrease-stock`);
+        console.log('🟡 Request body:', { quantity: 1 });
+        
+        const response = await axios.patch(`http://localhost:5050/products/${product.product_id}/decrease-stock`, {
+          quantity: 1
+        });
+        
+        console.log('🟢 PATCH response:', response.data);
+        
+        console.log('🟡 Dispatching to cart store');
+        store.dispatch('addToCart', product);
+        
+        const productIndex = products.value.findIndex(p => p.product_id === product.product_id);
+        if (productIndex !== -1) {
+          const updatedProducts = [...products.value];
+          updatedProducts[productIndex] = {
+            ...updatedProducts[productIndex],
+            quantity: updatedProducts[productIndex].quantity - 1
+          };
+          store.state.products = updatedProducts;
+        }
+        
+        toast.add({ severity: 'success', summary: 'Success', detail: `${product.product_name} added to cart`, life: 3000 });
+      } catch (error) {
+        console.error('🔴 ERROR in addToCart:', error);
+        console.log('🔴 Error response:', error.response?.data);
+        
+        toast.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: error.response?.data?.error || error.message || 'Failed to add to cart', 
+          life: 3000 
+        });
+      }
     };
 
-    // Utility functions
     const getStockStatus = (quantity) => {
-      if (quantity <= 0) return 'OUTOFSTOCK';
-      if (quantity < 10) return 'LOWSTOCK';
-      return 'INSTOCK';
+      if (quantity <= 0) return 'OUT OF STOCK';
+      if (quantity < 10) return 'LOW STOCK';
+      return 'IN STOCK';
     };
 
     const getStockSeverity = (status) => {
       switch(status) {
-        case 'INSTOCK': return 'success';
-        case 'LOWSTOCK': return 'warn';
-        case 'OUTOFSTOCK': return 'danger';
+        case 'IN STOCK': return 'success';
+        case 'LOW STOCK': return 'warn';
+        case 'OUT OF STOCK': return 'danger';
         default: return null;
       }
     };
@@ -200,6 +173,10 @@ export default {
         style: 'currency',
         currency: 'ZAR'
       }).format(price || 0);
+    };
+
+    const goToCart = () => {
+      router.push('/cart');
     };
 
     onMounted(() => {
@@ -221,32 +198,29 @@ export default {
       deleteDialog,
       product,
       submitted,
-      openNew,
-      editProduct,
-      confirmDelete,
-      saveProduct,
-      deleteProduct,
       addToCart,
       getStockStatus,
       getStockSeverity,
-      formatPrice
+      formatPrice,
+      handleImageError,
+      backgroundStyle,
+      toast,
+      goToCart
     };
   }
 };
 </script>
 
 <template>
-  <div class="products-view">
+  <div class="products-view" :style="backgroundStyle">
     <Toast />
     
-    <!-- Page Header -->
     <div class="page-header">
       <h1>Our Products</h1>
-      <p>Discover our collection of high-quality digital products</p>
+      <p>Discover our collection of high-quality products</p>
     </div>
 
     <div class="content-card">
-      <!-- Toolbar -->
       <div class="toolbar">
         <div class="toolbar-left">
           <span class="p-input-icon-left">
@@ -278,42 +252,23 @@ export default {
         </div>
         
         <div class="toolbar-right">
-          <Button 
-            v-if="isAuthenticated"
-            label="Add Product" 
-            icon="pi pi-plus" 
-            class="p-button-success"
-            @click="openNew"
-          />
-          <Button 
-            label="Cart" 
-            icon="pi pi-shopping-cart" 
-            class="p-button-outlined"
-            @click="$router.push('/cart')"
-          >
-            <Badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
-          </Button>
+          <button class="cart-btn" @click="goToCart">
+            <i class="pi pi-shopping-cart"></i>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <i class="pi pi-spin pi-spinner"></i>
         <p>Loading products...</p>
       </div>
 
-      <!-- Empty State -->
       <div v-else-if="filteredProducts.length === 0" class="empty-state">
         <i class="pi pi-box"></i>
         <h3>No Products Found</h3>
         <p v-if="searchQuery">No products match your search "{{ searchQuery }}"</p>
         <p v-else>No products available in the store yet.</p>
-        <Button 
-          v-if="isAuthenticated && !searchQuery"
-          label="Add Your First Product" 
-          icon="pi pi-plus"
-          @click="openNew"
-        />
         <Button 
           v-if="searchQuery"
           label="Clear Search" 
@@ -323,24 +278,31 @@ export default {
         />
       </div>
 
-      <!-- Products Grid -->
       <div v-else class="products-grid">
         <div 
-          v-for="product in filteredProducts" 
-          :key="product.product_id" 
+          v-for="product in filteredProducts"
+          :key="product.product_id"
           class="product-card"
           :class="{ 'out-of-stock': product.quantity <= 0 }"
         >
           <div class="product-badge" v-if="product.quantity <= 0">Out of Stock</div>
           <div class="product-badge low-stock" v-else-if="product.quantity < 10">Low Stock</div>
           
-          <div class="product-header">
-            <h3 class="product-name">{{ product.product_name }}</h3>
-            <span class="product-id">#{{ product.product_id }}</span>
+          <div class="product-image">
+            <img
+              :src="product.image_url || 'https://via.placeholder.com/300x200?text=No+Image'"
+              :alt="product.product_name"
+              @error="handleImageError"
+              loading="lazy"
+            />
           </div>
           
-          <div class="product-details">
+          <div class="product-info">
+            <h3 class="product-name">{{ product.product_name }}</h3>
+            <p class="product-id">#{{ product.product_id }}</p>
+            
             <div class="product-price">{{ formatPrice(product.product_price) }}</div>
+            
             <div class="product-stock">
               <Tag 
                 :value="getStockStatus(product.quantity)" 
@@ -348,9 +310,12 @@ export default {
               />
               <span class="stock-count">{{ product.quantity }} available</span>
             </div>
-          </div>
-          
-          <div class="product-actions">
+
+            <details class="product-description">
+              <summary>View Description</summary>
+              <p>{{ product.description || 'No description available.' }}</p>
+            </details>
+            
             <Button 
               @click="addToCart(product)" 
               :disabled="product.quantity === 0"
@@ -359,25 +324,11 @@ export default {
               class="buy-btn"
               :class="{ 'p-button-outlined': product.quantity === 0 }"
             />
-            
-            <div v-if="isAuthenticated" class="admin-actions">
-              <Button 
-                icon="pi pi-pencil" 
-                class="p-button-rounded p-button-text p-button-info"
-                @click="editProduct(product)"
-              />
-              <Button 
-                icon="pi pi-trash" 
-                class="p-button-rounded p-button-text p-button-danger"
-                @click="confirmDelete(product)"
-              />
-            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Product Dialog -->
     <Dialog 
       v-model:visible="productDialog" 
       :header="product.product_id ? 'Edit Product' : 'Add New Product'" 
@@ -397,12 +348,12 @@ export default {
       </div>
 
       <div class="field">
-        <label for="price">Price ($)</label>
+        <label for="price">Price (R)</label>
         <InputNumber 
           id="price" 
           v-model="product.product_price" 
           mode="currency" 
-          currency="USD" 
+          currency="ZAR" 
           :min="0.01"
           :class="{ 'p-invalid': submitted && !product.product_price }"
         />
@@ -426,7 +377,6 @@ export default {
       </template>
     </Dialog>
 
-    <!-- Delete Confirmation Dialog -->
     <Dialog 
       v-model:visible="deleteDialog" 
       header="Confirm Delete" 
@@ -447,9 +397,12 @@ export default {
 
 <style scoped>
 .products-view {
-  max-width: 1400px;
+  position: relative;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
+  min-height: 100vh;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .page-header {
@@ -460,18 +413,19 @@ export default {
 .page-header h1 {
   font-size: 2.5rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #b9b6b2;
   margin-bottom: 0.5rem;
 }
 
 .page-header p {
-  color: #718096;
+  color: #ffffff;
   font-size: 1.1rem;
 }
 
 .content-card {
-  background: white;
+  background: rgba(61, 124, 79, 0.4);
   border-radius: 16px;
+  backdrop-filter: blur(10px);
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -494,6 +448,21 @@ export default {
 
 .search-input {
   width: 250px;
+  padding-left: 2rem !important;
+}
+
+.p-input-icon-left {
+  position: relative;
+  display: inline-block;
+}
+
+.p-input-icon-left i {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  z-index: 1;
 }
 
 .category-dropdown, .sort-dropdown {
@@ -503,16 +472,55 @@ export default {
 .toolbar-right {
   display: flex;
   gap: 1rem;
+  align-items: center;
+}
+
+.cart-btn {
+  background: linear-gradient(135deg, #83ea66 0%, #4fa24b 100%);
+  border: none;
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-size: 24px;
+}
+
+.cart-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(234, 203, 102, 0.4);
 }
 
 .cart-badge {
-  margin-left: 0.5rem;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .product-card {
@@ -532,7 +540,7 @@ export default {
 }
 
 .product-card.out-of-stock {
-  opacity: 0.7;
+  opacity: 0.9;
   background: #f7fafc;
 }
 
@@ -547,73 +555,123 @@ export default {
   font-weight: 600;
   transform: rotate(45deg);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 .product-badge.low-stock {
   background: #dd6b20;
 }
 
-.product-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.product-image {
+  width: 100%;
+  height: 250px;
+  border-radius: 8px;
+  overflow: hidden;
   margin-bottom: 1rem;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-image img:hover {
+  transform: scale(1.05);
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .product-name {
   margin: 0;
-  color: #2d3748;
+  color: #947234;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .product-id {
-  color: #a0aec0;
+  color: #000000;
   font-size: 0.875rem;
-}
-
-.product-details {
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 .product-price {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
-  margin-bottom: 0.5rem;
+  color: #a18848;
+  margin: 0.5rem 0;
 }
 
 .product-stock {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .stock-count {
-  color: #718096;
+  color: #719673;
   font-size: 0.875rem;
 }
 
-.product-actions {
+.product-description {
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+}
+
+.product-description summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7c6a2d;
+  list-style: none;
+  outline: none;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-description summary::after {
+  content: "▾";
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.product-description[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.product-description summary::-webkit-details-marker {
+  display: none;
+}
+
+.product-description p {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  line-height: 1.5;
 }
 
 .buy-btn {
   width: 100%;
-}
-
-.admin-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .loading-state, .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #718096;
+  color: #71967b;
 }
 
 .loading-state i {
@@ -628,12 +686,8 @@ export default {
 }
 
 .empty-state h3 {
-  color: #2d3748;
+  color: #6b5f24;
   margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-  margin-bottom: 2rem;
 }
 
 .field {
@@ -644,7 +698,7 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #4a5568;
+  color: #7d4423;
 }
 
 .confirmation-content {
@@ -653,7 +707,36 @@ export default {
   padding: 1rem 0;
 }
 
-/* Responsive */
+@media (min-width: 769px) {
+  .cart-btn {
+    width: auto;
+    height: auto;
+    border-radius: 50px;
+    padding: 12px 24px;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .cart-badge {
+    position: static;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .products-view {
     padding: 1rem;
@@ -670,12 +753,27 @@ export default {
     width: 100%;
   }
   
-  .toolbar-right {
-    width: 100%;
-  }
-  
   .page-header h1 {
     font-size: 2rem;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  :deep(.p-toast) {
+    width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
   }
 }
 </style>

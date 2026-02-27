@@ -1,246 +1,170 @@
-<script>
-export default {
-  name: "LoginSignupView",
-  data() {
-    return {
-      login: true,
-      newCustomer: {
-        customer_name: "",
-        email: "",
-        password: "",
-      },
-      loginCustomer: {
-        email: "",
-        password: "",
-      },
-    };
-  },
-  methods: {
-    async postCustomer() {
-      try {
-        await this.$store.dispatch("postCustomer", this.newCustomer);
-        alert("Registration successful! Please login.");
-        this.login = true; 
-        this.newCustomer = {
-          customer_name: "",
-          email: "",
-          password: "",
-        };
-      } catch (error) {
-        console.error("Registration failed:", error);
-      }
-    },
-    async loginMethod() {
-      try {
-        const didLogin = await this.$store.dispatch(
-          "login",
-          this.loginCustomer,
-        );
+<script setup>
+import { ref } from "vue";
+import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
-        if (didLogin) {
-          this.loginCustomer = {
-            email: "",
-            password: "",
-          };
-          this.$router.push("/");
-        }
-      } catch (error) {
-        console.error("Login failed:", error);
-      }
-    },
-  },
+const store = useStore();
+const router = useRouter();
+
+const isLogin = ref(true);
+const isLoading = ref(false);
+const error = ref("");
+
+const loginData = ref({ email: "", password: "" });
+const signupData = ref({ customer_name: "", email: "", password: "" });
+
+const login = async () => {
+  error.value = "";
+  isLoading.value = true;
+  try {
+    await store.dispatch("login", loginData.value);
+    router.push("/");
+  } catch (err) {
+    error.value = "Invalid email or password";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const signup = async () => {
+  error.value = "";
+  isLoading.value = true;
+  try {
+    await store.dispatch("postCustomer", signupData.value);
+    isLogin.value = true;
+    signupData.value = { customer_name: "", email: "", password: "" };
+  } catch (err) {
+    error.value = "Registration failed";
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
 <template>
   <div class="auth-container">
     <div class="auth-card">
-      <div class="auth-header">
-        <h1>{{ login ? "Welcome Back" : "Create Account" }}</h1>
-        <p>
-          {{
-            login ? "Please login to your account" : "Sign up to get started"
-          }}
-        </p>
-      </div>
+      <h1>{{ isLogin ? "Welcome Back" : "Create Account" }}</h1>
 
-      <div class="toggle-section">
-        <button @click="login = !login" class="toggle-btn">
+      <div class="toggle">
+        <button @click="isLogin = !isLogin">
           {{
-            login
+            isLogin
               ? "Need an account? Sign up"
               : "Already have an account? Login"
           }}
         </button>
       </div>
 
-      <div class="form-section">
-        <form v-if="login" @submit.prevent="loginMethod" class="auth-form">
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              v-model="loginCustomer.email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+      <div v-if="error" class="error">{{ error }}</div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              v-model="loginCustomer.password"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+      <form @submit.prevent="isLogin ? login() : signup()">
+        <!-- Signup only fields -->
+        <template v-if="!isLogin">
+          <input
+            v-model="signupData.customer_name"
+            placeholder="Full Name"
+            required
+          />
+        </template>
 
-          <button type="submit" class="submit-btn">Login</button>
-        </form>
+        <!-- Common fields with separate v-model -->
+        <input
+          v-if="isLogin"
+          v-model="loginData.email"
+          type="email"
+          placeholder="Email"
+          required
+        />
+        <input
+          v-else
+          v-model="signupData.email"
+          type="email"
+          placeholder="Email"
+          required
+        />
 
-        <form v-else @submit.prevent="postCustomer" class="auth-form">
-          <div class="form-group">
-            <label for="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              v-model="newCustomer.customer_name"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
+        <input
+          v-if="isLogin"
+          v-model="loginData.password"
+          type="password"
+          placeholder="Password"
+          required
+        />
+        <input
+          v-else
+          v-model="signupData.password"
+          type="password"
+          placeholder="Password"
+          required
+        />
 
-          <div class="form-group">
-            <label for="signup-email">Email</label>
-            <input
-              type="email"
-              id="signup-email"
-              v-model="newCustomer.email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="signup-password">Password</label>
-            <input
-              type="password"
-              id="signup-password"
-              v-model="newCustomer.password"
-              placeholder="Create a password (min. 6 characters)"
-              required
-              minlength="6"
-            />
-          </div>
-
-          <button type="submit" class="submit-btn">Sign Up</button>
-        </form>
-      </div>
+        <button type="submit" :disabled="isLoading" class="submit-btn">
+          {{ isLoading ? "Please wait..." : isLogin ? "Login" : "Sign Up" }}
+        </button>
+      </form>
     </div>
   </div>
 </template>
 
 <style scoped>
 .auth-container {
-  min-height: calc(100vh - 200px);
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
 }
-
 .auth-card {
   background: white;
   border-radius: 20px;
   padding: 2.5rem;
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
 }
-
-.auth-header {
+h1 {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
-
-.auth-header h1 {
-  color: #333;
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.auth-header p {
-  color: #666;
-}
-
-.toggle-section {
+.toggle {
   text-align: center;
-  margin-bottom: 2rem;
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  color: #667eea;
-  cursor: pointer;
-  font-size: 0.95rem;
-  text-decoration: underline;
-  transition: color 0.3s;
-}
-
-.toggle-btn:hover {
-  color: #764ba2;
-}
-
-.form-group {
   margin-bottom: 1.5rem;
 }
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #333;
-  font-weight: 500;
+.toggle button {
+  background: none;
+  border: none;
+  color: #8b4513;
+  cursor: pointer;
+  text-decoration: underline;
 }
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+.error {
+  background: #fee;
+  color: #c00;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
 }
-
-.form-group input:focus {
-  outline: none;
-  border-color: #667eea;
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-
+input {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
 .submit-btn {
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.75rem;
+  background: #8b4513;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
 }
-
-.submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-}
-
-.submit-btn:active {
-  transform: translateY(0);
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
