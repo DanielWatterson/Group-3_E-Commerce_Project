@@ -11,18 +11,18 @@ export const getProductById = async (id) => {
     return rows[0];
 };
 
-export const createProduct = async (product_name, product_price, quantity, image_url, has_warranty = false, warranty_period_months = null) => {
+export const createProduct = async (product_name, description, product_price, quantity, image_url, has_warranty = false, warranty_period_months = null) => {
     const [rows] = await pool.query(
-        "INSERT INTO products (product_name, product_price, quantity, image_url, has_warranty, warranty_period_months) VALUES (?, ?, ?, ?, ?, ?)",
-        [product_name, product_price, quantity, image_url, has_warranty, warranty_period_months]
+        "INSERT INTO products (product_name, description, product_price, quantity, image_url, has_warranty, warranty_period_months) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [product_name, description, product_price, quantity, image_url, has_warranty, warranty_period_months]
     );
     return rows;
 };
 
-export const updateProduct = async (id, product_name, product_price, quantity, has_warranty, warranty_period_months) => {
+export const updateProduct = async (id, product_name, description, product_price, quantity, has_warranty, warranty_period_months) => {
     const [rows] = await pool.query(
-        "UPDATE products SET product_name = ?, product_price = ?, quantity = ?, has_warranty = ?, warranty_period_months = ? WHERE product_id = ?",
-        [product_name, product_price, quantity, has_warranty, warranty_period_months, id]
+        "UPDATE products SET product_name = ?, description = ?, product_price = ?, quantity = ?, has_warranty = ?, warranty_period_months = ? WHERE product_id = ?",
+        [product_name, description, product_price, quantity, has_warranty, warranty_period_months, id]
     );
     return rows;
 };

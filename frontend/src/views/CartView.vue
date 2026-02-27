@@ -34,6 +34,11 @@ export default {
       deliveryInstructions: "",
     });
 
+    const handleImageError = (event) => {
+  event.target.style.display = 'none';
+  event.target.parentElement.innerHTML = '<i class="pi pi-box"></i>';
+}
+
     const provinces = ref([
       "Gauteng", "Western Cape", "KwaZulu-Natal", "Eastern Cape",
       "Free State", "Limpopo", "Mpumalanga", "North West", "Northern Cape"
@@ -276,6 +281,7 @@ export default {
       openConfirmDialog,
       processPayment,
       continueShopping,
+      handleImageError
     };
   },
 };
@@ -315,9 +321,15 @@ export default {
             <h2>Your Items</h2>
             
             <div v-for="item in cartItems" :key="item.product_id" class="cart-item">
-              <div class="item-image">
-                <i class="pi pi-box"></i>
-              </div>
+                    <div class="item-image">
+                      <img 
+                        v-if="item.image_url" 
+                        :src="item.image_url" 
+                        :alt="item.product_name"
+                        @error="handleImageError"
+                      />
+                      <i v-else class="pi pi-box"></i>
+                    </div>
               
               <div class="item-details">
                 <div class="item-header">
@@ -326,7 +338,6 @@ export default {
                 </div>
                 
                 <div class="item-meta">
-                  <span class="item-id">#{{ item.product_id }}</span>
                   <span class="item-unit-price">{{ formatPrice(item.product_price) }} each</span>
                 </div>
                 
@@ -692,11 +703,13 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.item-image i {
-  font-size: 2rem;
-  color: #cbd5e0;
+.item-image img {
+  width: 100%;  /* Changed from 30% to 100% */
+  height: 100%; /* Changed from 30% to 100% */
+  object-fit: cover;
 }
 
 .item-details {
@@ -1180,11 +1193,6 @@ export default {
   
   .cart-item {
     flex-direction: column;
-  }
-  
-  .item-image {
-    width: 100%;
-    height: 150px;
   }
 }
 </style>

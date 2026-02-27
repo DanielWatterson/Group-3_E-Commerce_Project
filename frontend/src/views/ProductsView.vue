@@ -299,7 +299,6 @@ export default {
           
           <div class="product-info">
             <h3 class="product-name">{{ product.product_name }}</h3>
-            <p class="product-id">#{{ product.product_id }}</p>
             
             <div class="product-price">{{ formatPrice(product.product_price) }}</div>
             
@@ -311,10 +310,10 @@ export default {
               <span class="stock-count">{{ product.quantity }} available</span>
             </div>
 
-            <details class="product-description">
-              <summary>View Description</summary>
-              <p>{{ product.description || 'No description available.' }}</p>
-            </details>
+              <details class="product-description">
+                <summary>View Description</summary>
+                <p>{{ product.description || 'available in maple,oak,mahogany,pine,walnut and cherry.' }}</p>
+              </details>
             
             <Button 
               @click="addToCart(product)" 
