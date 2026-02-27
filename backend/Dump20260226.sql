@@ -46,6 +46,28 @@ INSERT INTO `customer` VALUES (1,'Marie','cutemarie@gmail.com','Im@tHeb3acH'),(2
 UNLOCK TABLES;
 
 --
+-- Temporary view structure for view `order_audit`
+--
+
+DROP TABLE IF EXISTS `order_audit`;
+/*!50001 DROP VIEW IF EXISTS `order_audit`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `order_audit` AS SELECT 
+ 1 AS `order_id`,
+ 1 AS `customer_name`,
+ 1 AS `email`,
+ 1 AS `original_total`,
+ 1 AS `discount_percent`,
+ 1 AS `discount_amount`,
+ 1 AS `final_total`,
+ 1 AS `order_status`,
+ 1 AS `order_date`,
+ 1 AS `items_count`,
+ 1 AS `products`*/;
+SET character_set_client = @saved_cs_client;
+
+--
 -- Table structure for table `order_items`
 --
 
@@ -62,8 +84,7 @@ CREATE TABLE `order_items` (
   KEY `idx_order_items_order` (`order_id`),
   KEY `idx_order_items_product` (`product_id`),
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
-  CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_order_quantity_positive` CHECK ((`quantity` > 0))
+  CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -73,7 +94,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,2,2,'2026-02-20 11:32:53'),(2,2,3,1,'2026-02-20 11:32:53'),(3,3,1,3,'2026-02-20 11:32:53');
+INSERT INTO `order_items` VALUES (1,1,1,2,'2026-02-26 12:43:52'),(2,2,3,1,'2026-02-26 12:43:52'),(3,3,5,1,'2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -88,10 +109,14 @@ CREATE TABLE `orders` (
   `order_id` int NOT NULL AUTO_INCREMENT,
   `customer_id` int NOT NULL,
   `order_status` enum('pending','paid','shipped','completed','cancelled') DEFAULT 'pending',
+  `original_total` decimal(10,2) NOT NULL,
+  `final_total` decimal(10,2) NOT NULL,
+  `discount_percent` decimal(5,2) DEFAULT '0.00',
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
   `order_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`order_id`),
   KEY `idx_order_customer` (`customer_id`),
-  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE
+  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -101,7 +126,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,2,'pending','2026-02-20 11:32:53'),(2,3,'pending','2026-02-20 11:32:53'),(3,1,'pending','2026-02-20 11:32:53');
+INSERT INTO `orders` VALUES (1,1,'paid',7999.98,5199.99,35.00,2800.00,'2026-02-26 12:43:52'),(2,2,'pending',4999.99,3999.99,20.00,1000.00,'2026-02-26 12:43:52'),(3,3,'paid',2999.99,2549.99,15.00,450.00,'2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -116,13 +141,15 @@ CREATE TABLE `payments` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `payment_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  `payment_status` enum('pending','completed','failed') DEFAULT 'pending',
   `payment_method` varchar(50) DEFAULT NULL,
+  `payment_status` enum('pending','completed','failed') DEFAULT 'pending',
+  `refund_id` varchar(100) DEFAULT NULL,
+  `refund_amount` decimal(10,2) DEFAULT NULL,
+  `refund_status` enum('pending','completed','failed') DEFAULT NULL,
+  `payment_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`payment_id`),
   KEY `idx_payments_order` (`order_id`),
-  CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
-  CONSTRAINT `chk_payment_amount_positive` CHECK ((`amount` > 0))
+  CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -132,7 +159,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,7999.98,'2026-02-20 11:32:53','completed','credit_card'),(2,2,4999.99,'2026-02-20 11:32:53','failed','paypal'),(3,3,8999.97,'2026-02-20 11:32:53','pending','bank_transfer');
+INSERT INTO `payments` VALUES (1,1,5199.99,'payfast','completed',NULL,NULL,NULL,'2026-02-26 12:43:52'),(2,2,4999.99,'paypal','pending',NULL,NULL,NULL,'2026-02-26 12:43:52'),(3,3,2999.99,'credit_card','failed','1',2999.99,'pending','2026-02-26 12:43:52');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -149,9 +176,15 @@ CREATE TABLE `products` (
   `product_price` decimal(10,2) NOT NULL,
   `quantity` int NOT NULL,
   `image_url` varchar(500) DEFAULT NULL,
+  `has_warranty` tinyint(1) DEFAULT '0',
+  `warranty_period_months` int DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`product_id`),
   CONSTRAINT `chk_price_positive` CHECK ((`product_price` > 0)),
-  CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0))
+  CONSTRAINT `chk_quantity_nonnegative` CHECK ((`quantity` >= 0)),
+  CONSTRAINT `chk_stock_alert` CHECK ((`quantity` >= 0)),
+  CONSTRAINT `chk_warranty_period` CHECK ((`warranty_period_months` >= 0))
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -161,9 +194,27 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp'),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg'),(3,'Premium Wooden Desk',4999.99,25,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg'),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg'),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png'),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(10,'Custom Desk - Premium',7999.99,10,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png'),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png');
+INSERT INTO `products` VALUES (1,'Basic Wooden Desk',2999.99,75,'https://i.postimg.cc/5t16MvWb/shopping-q-tbn-ANd9Gc-TRs5F-MWYt-JXAX6Rdjg6-dwiyjh-Iy-XT2w0Erp-Cd-QKv-Dc-QJ0XUKq7ka-Nb-Hx-IQJVc-Wtdt.webp',1,12,1,NULL),(2,'Standard Wooden Desk',3999.99,50,'https://i.postimg.cc/mDgkPsrX/images-q-tbn-ANd9Gc-Tg-PNm-IErf-Jk2vf-Dd-NN7hko-Z-4so-FM5evu-Mk-A-s.jpg',1,12,1,NULL),(3,'Premium Wooden Desk',4999.99,0,'https://i.postimg.cc/1t3X8Qz6/images-q-tbn-ANd9Gc-SDE6s-Ov-Gxh-E-Byn8q2Xcxk-Vo0PZ7w-W49Ef-Q-s.jpg',1,24,1,NULL),(4,'Deluxe Wooden Desk',5999.99,40,'https://i.postimg.cc/6Q0T63B5/images-q-tbn-ANd9Gc-Qk-Oen9l-Xj7Kqh-BNqo-H3Zy-G72FUc-Y6t-GJQw-Tw-s.jpg',1,24,1,NULL),(5,'Custom Desk - Entry',2999.99,35,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(6,'Custom Desk - Basic',3999.99,30,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',0,NULL,1,NULL),(7,'Custom Desk - Plus',4999.99,25,'https://i.postimg.cc/KYr1PM03/custom-basic-desk.png',1,12,1,NULL),(8,'Custom Desk - Pro',5999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,12,1,NULL),(9,'Custom Desk - Elite',6999.99,15,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(10,'Custom Desk - Premium',7999.99,5,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,24,1,NULL),(11,'Custom Desk - Luxury',8999.99,20,'https://i.postimg.cc/cHycHwrx/custom-pro-desk.png',1,36,1,NULL);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Final view structure for view `order_audit`
+--
+
+/*!50001 DROP VIEW IF EXISTS `order_audit`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `order_audit` AS select `o`.`order_id` AS `order_id`,`c`.`customer_name` AS `customer_name`,`c`.`email` AS `email`,`o`.`original_total` AS `original_total`,`o`.`discount_percent` AS `discount_percent`,`o`.`discount_amount` AS `discount_amount`,`o`.`final_total` AS `final_total`,`o`.`order_status` AS `order_status`,`o`.`order_date` AS `order_date`,count(`oi`.`order_item_id`) AS `items_count`,group_concat(`p`.`product_name` separator ', ') AS `products` from (((`orders` `o` join `customer` `c` on((`o`.`customer_id` = `c`.`customer_id`))) left join `order_items` `oi` on((`o`.`order_id` = `oi`.`order_id`))) left join `products` `p` on((`oi`.`product_id` = `p`.`product_id`))) group by `o`.`order_id` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -174,4 +225,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-20 11:36:52
+-- Dump completed on 2026-02-26 12:47:29

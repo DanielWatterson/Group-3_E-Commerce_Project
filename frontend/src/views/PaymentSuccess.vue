@@ -109,6 +109,7 @@ onMounted(async () => {
   justify-content: center;
   font-size: 2.5rem;
   margin: 0 auto 1.5rem;
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
 
 .success-icon {

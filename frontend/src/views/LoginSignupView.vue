@@ -13,10 +13,71 @@ export default {
         email: "",
         password: "",
       },
+      loginError: "",
+      signupError: "",
+      isLoading: false,
+      passwordErrors: [],
+      passwordStrength: 0,
     };
   },
+
+  computed: {
+  passwordRequirements() {
+    const password = this.newCustomer.password || "";
+    const errors = [];
+    let strength = 0;
+    
+    if (password.length < 8) {
+      errors.push("At least 8 characters");
+    } else {
+      strength += 25;
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push("One uppercase letter");
+    } else {
+      strength += 25;
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push("One lowercase letter");
+    } else {
+      strength += 15;
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      errors.push("One number");
+    } else {
+      strength += 20;
+    }
+    
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      errors.push("One special character");
+    } else {
+      strength += 15;
+    }
+    
+    if (/\s/.test(password)) {
+      errors.push("No spaces allowed");
+    } else if (strength < 100) {
+      strength = Math.min(strength + 5, 100);
+    }
+    
+    this.passwordErrors = errors;
+    this.passwordStrength = strength;
+    
+    return {
+      isValid: errors.length === 0,
+      errors: errors,
+      strength: strength
+    };
+  }
+},
   methods: {
     async postCustomer() {
+      this.signupError = "";
+      this.isLoading = true;
+      
       try {
         await this.$store.dispatch("postCustomer", this.newCustomer);
         alert("Registration successful! Please login.");
@@ -28,9 +89,15 @@ export default {
         };
       } catch (error) {
         console.error("Registration failed:", error);
+        this.signupError = error.response?.data?.message || "Registration failed";
+      } finally {
+        this.isLoading = false;
       }
     },
     async loginMethod() {
+      this.loginError = "";
+      this.isLoading = true;
+      
       try {
         const didLogin = await this.$store.dispatch(
           "login",
@@ -46,6 +113,9 @@ export default {
         }
       } catch (error) {
         console.error("Login failed:", error);
+        this.loginError = error.response?.data?.message || "Invalid email or password";
+      } finally {
+        this.isLoading = false;
       }
     },
   },
@@ -76,6 +146,10 @@ export default {
 
       <div class="form-section">
         <form v-if="login" @submit.prevent="loginMethod" class="auth-form">
+          <div v-if="loginError" class="error-message">
+            {{ loginError }}
+          </div>
+
           <div class="form-group">
             <label for="email">Email</label>
             <input
@@ -84,6 +158,7 @@ export default {
               v-model="loginCustomer.email"
               placeholder="Enter your email"
               required
+              :disabled="isLoading"
             />
           </div>
 
@@ -95,49 +170,104 @@ export default {
               v-model="loginCustomer.password"
               placeholder="Enter your password"
               required
+              :disabled="isLoading"
             />
           </div>
 
-          <button type="submit" class="submit-btn">Login</button>
+          <button type="submit" class="submit-btn" :disabled="isLoading">
+            {{ isLoading ? "Logging in..." : "Login" }}
+          </button>
         </form>
 
-        <form v-else @submit.prevent="postCustomer" class="auth-form">
-          <div class="form-group">
-            <label for="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              v-model="newCustomer.customer_name"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
+        <!-- SIGNUP FORM -->
+<form v-else @submit.prevent="postCustomer" class="auth-form">
+  <div v-if="signupError" class="error-message">
+    {{ signupError }}
+  </div>
 
-          <div class="form-group">
-            <label for="signup-email">Email</label>
-            <input
-              type="email"
-              id="signup-email"
-              v-model="newCustomer.email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+  <div class="form-group">
+    <label for="name">Full Name</label>
+    <input
+      type="text"
+      id="name"
+      v-model="newCustomer.customer_name"
+      placeholder="Enter your full name"
+      required
+      :disabled="isLoading"
+    />
+  </div>
 
-          <div class="form-group">
-            <label for="signup-password">Password</label>
-            <input
-              type="password"
-              id="signup-password"
-              v-model="newCustomer.password"
-              placeholder="Create a password (min. 6 characters)"
-              required
-              minlength="6"
-            />
-          </div>
+  <div class="form-group">
+    <label for="signup-email">Email</label>
+    <input
+      type="email"
+      id="signup-email"
+      v-model="newCustomer.email"
+      placeholder="Enter your email"
+      required
+      :disabled="isLoading"
+    />
+  </div>
 
-          <button type="submit" class="submit-btn">Sign Up</button>
-        </form>
+  <div class="form-group">
+    <label for="signup-password">Password</label>
+    <input
+      type="password"
+      id="signup-password"
+      v-model="newCustomer.password"
+      placeholder="Create a password"
+      required
+      minlength="8"
+      :disabled="isLoading"
+      @input="passwordRequirements" 
+    />
+    
+    <!-- Password strength bar -->
+    <div class="password-strength" v-if="newCustomer.password">
+      <div 
+        class="strength-bar" 
+        :style="{ width: passwordStrength + '%' }"
+        :class="{
+          'weak': passwordStrength < 40,
+          'medium': passwordStrength >= 40 && passwordStrength < 70,
+          'strong': passwordStrength >= 70
+        }"
+      ></div>
+    </div>
+    
+    <!-- Password requirements list -->
+    <div class="password-requirements" v-if="newCustomer.password">
+      <p class="requirements-title">Password must contain:</p>
+      <ul>
+        <li 
+          v-for="error in passwordErrors" 
+          :key="error"
+          class="requirement unmet"
+        >
+          ❌ {{ error }}
+        </li>
+        <li 
+          v-for="req in [
+            'At least 8 characters',
+            'One uppercase letter',
+            'One lowercase letter', 
+            'One number',
+            'One special character',
+            'No spaces'
+          ].filter(r => !passwordErrors.includes(r))" 
+          :key="req"
+          class="requirement met"
+        >
+          ✅ {{ req }}
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <button type="submit" class="submit-btn" :disabled="isLoading || (newCustomer.password && !passwordRequirements.isValid)">
+    {{ isLoading ? "Creating Account..." : "Sign Up" }}
+  </button>
+</form>
       </div>
     </div>
   </div>
@@ -243,4 +373,86 @@ export default {
 .submit-btn:active {
   transform: translateY(0);
 }
+
+.error-message {
+  background-color: #fee;
+  color: #c00;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #fcc;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-group input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Password validation styles */
+.password-strength {
+  height: 5px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.strength-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.strength-bar.weak {
+  background-color: #ff4444;
+}
+
+.strength-bar.medium {
+  background-color: #ffaa00;
+}
+
+.strength-bar.strong {
+  background-color: #00c851;
+}
+
+.password-requirements {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.requirements-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirement {
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+
+.requirement.met {
+  color: #00c851;
+}
+
+.requirement.unmet {
+  color: #ff4444;
+}
+
 </style>
+ 

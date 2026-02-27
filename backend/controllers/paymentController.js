@@ -1,4 +1,4 @@
-// paymentController.js
+// controllers/paymentController.js
 import {
   getAllPayments as getAllPaymentsModel,
   getPaymentById as getPaymentByIdModel,
@@ -7,12 +7,14 @@ import {
   updatePaymentStatus as updatePaymentStatusModel,
   deletePayment as deletePaymentModel,
   getOrderTotal as getOrderTotalModel,
+  processRefund as processRefundMod,
+  updateRefundStatus as updateRefundStatusMod,
 } from "../models/paymentModel.js";
 
 import {
   getOrderById as getOrderByIdModel,
-  createOrder as createOrderModel,
   updateOrder as updateOrderModel,
+  createOrder as createOrderModel,
 } from "../models/orderModel.js";
 
 import { addOrderItem as addOrderItemModel } from "../models/orderItemModel.js";
@@ -34,6 +36,7 @@ const createValidationError = (message, status = 400) => {
 
 const PAYFAST_ITN_DEBUG_LIMIT = 20;
 const payfastItnDebugEntries = [];
+
 const logPayfastItn = (message, payload) => {
   if (payload === undefined) {
     console.log(`[PayFast ITN] ${message}`);
@@ -130,13 +133,15 @@ const createOrderWithItems = async (customerId, items) => {
   return { orderId, validatedItems };
 };
 
+// ==================== PAYMENT CRUD ====================
+
 export const getAllPayments = async (req, res) => {
   try {
     const payments = await getAllPaymentsModel();
     res.json(payments);
   } catch (error) {
     console.error("Error fetching payments:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -152,7 +157,7 @@ export const getPaymentById = async (req, res) => {
     res.json(payment);
   } catch (error) {
     console.error("Error fetching payment:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -169,7 +174,7 @@ export const getPaymentsByOrderId = async (req, res) => {
     res.json(payments);
   } catch (error) {
     console.error("Error fetching order payments:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -195,7 +200,7 @@ export const createPayment = async (req, res) => {
       order_id,
       calculatedAmount,
       payment_method,
-      payment_status || "pending",
+      payment_status || "pending"
     );
 
     const newPayment = await getPaymentByIdModel(payment.insertId);
@@ -207,9 +212,11 @@ export const createPayment = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating payment:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
+
+// ==================== PAYFAST ====================
 
 export const createPayfastPayment = async (req, res) => {
   try {
@@ -276,13 +283,13 @@ export const handlePayfastNotify = async (req, res) => {
     const startedAt = Date.now();
     const rawBody = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body || "");
     const itnData = payfastService.parseRawItnBody(rawBody);
+
     logPayfastItn("Incoming notify request", {
       method: req.method,
       path: req.originalUrl,
       ip: req.ip,
       contentType: req.get("content-type") || "",
       userAgent: req.get("user-agent") || "",
-      headers: req.headers,
       rawBody,
       itnData,
     });
@@ -342,6 +349,7 @@ export const handlePayfastNotify = async (req, res) => {
     }
 
     const { paymentStatus, orderStatus } = payfastService.mapPayfastStatus(itnData.payment_status);
+
     logPayfastItn("Validation passed; mapping status", {
       paymentId,
       payfastStatus: itnData.payment_status,
@@ -403,6 +411,59 @@ export const getPayfastNotifyDebugLog = async (req, res) => {
   });
 };
 
+// ==================== REFUNDS ====================
+
+export const processRefund = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { refund_id, refund_amount } = req.body;
+
+    const payment = await getPaymentByIdModel(id);
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    if (payment.payment_status !== "completed") {
+      return res.status(400).json({ error: "Can only refund completed payments" });
+    }
+
+    await processRefundMod(id, refund_id, refund_amount);
+
+    res.json({
+      message: "Refund processed successfully",
+      refund: {
+        payment_id: id,
+        refund_id,
+        refund_amount,
+      },
+    });
+  } catch (error) {
+    console.error("Error processing refund:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateRefundStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { refund_status } = req.body;
+
+    const payment = await getPaymentByIdModel(id);
+    if (!payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    await updateRefundStatusMod(id, refund_status);
+
+    res.json({ message: "Refund status updated successfully" });
+  } catch (error) {
+    console.error("Error updating refund status:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==================== UPDATE/DELETE ====================
+
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -426,7 +487,7 @@ export const updatePaymentStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating payment status:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -444,6 +505,6 @@ export const deletePayment = async (req, res) => {
     res.json({ message: "Payment deleted successfully" });
   } catch (error) {
     console.error("Error deleting payment:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error.message });
   }
 };
