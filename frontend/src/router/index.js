@@ -67,6 +67,7 @@ const router = createRouter({
   ],
 });
 
+// Fixed navigation guard - no 'next' parameter needed
 router.beforeEach((to) => {
   const isAuthenticated = store.getters.isAuthenticated;
   const isSignupMode = to.path === "/login" && to.query?.mode === "signup";

@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 
@@ -681,12 +681,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="ar-page">
+  <div class="ar-page">
     <div ref="stageRef" class="ar-stage">
+      <!-- A-Frame Scene -->
       <a-scene
         v-if="sceneVisible"
-        ref="sceneRef"
-        class="ar-scene"
         embedded
         vr-mode-ui="enabled: false"
         renderer="alpha: true; antialias: true; colorManagement: true;"
@@ -711,13 +710,14 @@ onUnmounted(() => {
 
       <div v-else class="ar-loading">Initializing camera and tracking...</div>
 
-      <header class="ar-header">
-        <h1>Virtual Showroom AR</h1>
-        <p>Scan the Hiro marker to preview your desk in real space.</p>
-      </header>
+      <!-- UI Overlay -->
+      <div class="ar-header">
+        <h1>Virtual Showroom</h1>
+        <p>Scan the Hiro marker to see the desk</p>
+      </div>
 
-      <div class="ar-overlay ar-overlay-bottom">
-        <span :class="['status-dot', markerVisible ? 'is-visible' : 'is-hidden']"></span>
+      <div class="ar-status">
+        <span :class="['dot', markerVisible ? 'visible' : 'hidden']"></span>
         <span>{{ statusText }}</span>
       </div>
 
@@ -776,13 +776,8 @@ onUnmounted(() => {
 .ar-stage {
   position: relative;
   width: 100%;
-  flex: 1 1 auto;
-  min-height: 280px;
+  height: 100%;
   background: #0a0a0a;
-  overflow: hidden;
-  isolation: isolate;
-  touch-action: none;
-  overscroll-behavior: contain;
 }
 
 .ar-scene {
@@ -790,8 +785,6 @@ onUnmounted(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  pointer-events: none;
 }
 
 .ar-loading {
@@ -800,50 +793,39 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
+  color: white;
   background: #0a0a0a;
-  z-index: 3;
+  z-index: 10;
 }
 
 .ar-overlay {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  display: inline-flex;
+  z-index: 20;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(12, 12, 12, 0.58);
-  color: #fff;
-  padding: 0.55rem 0.9rem;
-  border-radius: 999px;
-  backdrop-filter: blur(4px);
-  z-index: 10;
-  font-size: 0.92rem;
-  font-weight: 500;
-  max-width: min(92vw, 760px);
-  text-align: center;
-  line-height: 1.25;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 40px;
+  font-size: 0.9rem;
 }
 
-.ar-overlay-bottom {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.9rem);
-}
-
-.status-dot {
-  width: 0.55rem;
-  height: 0.55rem;
+.dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  flex: 0 0 0.55rem;
 }
 
-.status-dot.is-visible {
-  background: #43e47a;
-  box-shadow: 0 0 10px rgba(67, 228, 122, 0.7);
+.dot.visible {
+  background: #4caf50;
+  box-shadow: 0 0 10px #4caf50;
 }
 
-.status-dot.is-hidden {
-  background: #ff8b8b;
+.dot.hidden {
+  background: #f44336;
 }
 
 .ar-error {
