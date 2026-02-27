@@ -40,8 +40,8 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
     try {
-        const { product_name, product_price, quantity, image_url, has_warranty = false, warranty_period_months = null } = req.body;
-        const result = await createProductMod(product_name, product_price, quantity, image_url, has_warranty, warranty_period_months);
+        const { product_name, description, product_price, quantity, image_url, has_warranty = false, warranty_period_months = null } = req.body;
+        const result = await createProductMod(product_name, description, product_price, quantity, image_url, has_warranty, warranty_period_months);
         res.status(201).json({ 
             message: "Product created", 
             product_id: result.insertId 
@@ -54,9 +54,9 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { product_name, product_price, quantity, has_warranty, warranty_period_months } = req.body;
+        const { product_name, description, product_price, quantity, has_warranty, warranty_period_months } = req.body;
         
-        await updateProductMod(id, product_name, product_price, quantity, has_warranty, warranty_period_months);
+        await updateProductMod(id, product_name, description, product_price, quantity, has_warranty, warranty_period_months);
         
         const updatedProduct = await getProductByIdMod(id);
         res.json({ 
