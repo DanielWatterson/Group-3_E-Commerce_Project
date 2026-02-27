@@ -673,7 +673,7 @@ const addToCart = async (product) => {
 }
 
 .product-card.out-of-stock {
-  opacity: 0.7;
+  opacity: 0.9;
   background: #f7fafc;
    font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
 }
@@ -748,9 +748,9 @@ const addToCart = async (product) => {
 }
 
 .product-image {
-  width: 100%;
+  width: 90%;
   height: 250px;              /* HARD LIMIT */
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   margin-bottom: 1rem;
   background: #f7fafc;
